@@ -1,0 +1,119 @@
+{
+    "name": "anixapp",
+    "version": "0.1.42",
+    "description": "Быстрый клиент для просмотра аниме на базе Anixart API",
+    "repository": "github:Maks1mio/anixapp",
+    "main": "electron/main.js",
+    "scripts": {
+        "install:no-esbuild-postinstall": "cross-env ESBUILD_SKIP_POSTINSTALL=1 yarn install",
+        "dev": "vite",
+        "build:icon": "node scripts/build-icon.js",
+        "build": "vite build && yarn build:icon && electron-builder --publish=never",
+        "build:win": "vite build && yarn build:icon && electron-builder --win --publish=never",
+        "build:linux-deb": "vite build && yarn build:icon && electron-builder --linux deb --publish=never",
+        "build:linux-arch": "vite build && yarn build:icon && electron-builder --linux pacman --publish=never",
+        "build:linux-appimage": "vite build && yarn build:icon && electron-builder --linux AppImage --publish=never",
+        "build:vite": "vite build",
+        "rebuild:native": "electron-rebuild -f -w discord_bridge",
+        "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+        "electron:build": "vite build && yarn build:icon && electron-builder --publish=never",
+        "preview": "vite preview"
+    },
+    "keywords": [
+        "anime",
+        "anixart",
+        "electron"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@electron/rebuild": "^4.0.4",
+        "@sveltejs/vite-plugin-svelte": "^7.1.2",
+        "concurrently": "^10.0.3",
+        "cross-env": "^10.1.0",
+        "electron": "42.4.1",
+        "electron-builder": "^26.15.3",
+        "png2icons": "^2.0.1",
+        "sass": "^1.101.0",
+        "svelte": "^5.56.3",
+        "svelte-check": "^4.6.0",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.16",
+        "wait-on": "^9.0.10"
+    },
+    "dependencies": {
+        "@fontsource/ibm-plex-sans": "^5.2.8",
+        "@fontsource/jetbrains-mono": "^5.2.8",
+        "@fontsource/unbounded": "^5.2.8",
+        "@xhayper/discord-rpc": "^1.3.1",
+        "anime4k-webgpu": "^1.0.0",
+        "anixapi": "^0.2.1",
+        "ffmpeg-static": "^5.3.0",
+        "flag-icons": "^7.5.0",
+        "gsap": "^3.15.0",
+        "hls.js": "^1.6.16",
+        "html-to-image": "^1.11.13",
+        "lottie-web": "^5.13.0",
+        "lucide": "^1.21.0"
+    },
+    "resolutions": {
+        "axios": "^1.18.0",
+        "follow-redirects": "^1.16.0",
+        "postcss": "^8.5.15",
+        "@xmldom/xmldom": "^0.8.13",
+        "ws": "^8.21.0",
+        "tmp": "^0.2.7",
+        "form-data": "^4.0.6",
+        "tar": "^7.5.16",
+        "undici": "^7.28.0",
+        "ip-address": "^10.2.0",
+        "shell-quote": "^1.8.4",
+        "js-yaml": "^4.2.0"
+    },
+    "build": {
+        "appId": "com.anixapp.client",
+        "productName": "AnixApp",
+        "electronDist": "node_modules/electron/dist",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "dist/**/*",
+            "electron/**/*",
+            "public/logo/**/*"
+        ],
+        "asarUnpack": [
+            "**/node_modules/ffmpeg-static/**"
+        ],
+        "icon": "public/logo/512x512.png",
+        "win": {
+            "icon": "public/logo/icon.ico"
+        },
+        "linux": {
+            "target": [
+                "deb",
+                "pacman",
+                "AppImage"
+            ],
+            "icon": "public/logo",
+            "category": "Network",
+            "maintainer": "Maks1mio",
+            "executableName": "anixapp"
+        },
+        "deb": {
+            "depends": [
+                "libgtk-3-0",
+                "libnotify4",
+                "libnss3",
+                "libxss1",
+                "libxtst6",
+                "xdg-utils",
+                "libatspi2.0-0",
+                "libsecret-1-0"
+            ]
+        },
+        "pacman": {
+            "artifactName": "${name}_${version}_${arch}.pkg.tar.zst"
+        }
+    }
+}

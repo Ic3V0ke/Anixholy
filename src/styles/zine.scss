@@ -1,0 +1,1206 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  ZINE LAYER — глобальный печатный стиль поверх базовых стилей приложения.
+//  Подключается последним. Никакого стекла: бумага, чернила, киноварь,
+//  жёсткие тени, толстые рамки, лёгкие повороты.
+// ═══════════════════════════════════════════════════════════════════════════
+@use 'variables' as *;
+
+// ── Ключевые кадры ───────────────────────────────────────────────────────────
+@keyframes zine-paper-in {
+  from { opacity: 0; transform: translateY(28px) rotate(2deg) scale(1.03); }
+}
+
+@keyframes zine-pop-in {
+  0%   { opacity: 0; transform: scale(.7) rotate(-5deg); }
+  70%  { transform: scale(1.05) rotate(1.5deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes zine-fold-down {
+  from { opacity: 0; transform: perspective(900px) rotateX(-72deg); }
+}
+
+@keyframes zine-slide-tear {
+  from { opacity: 0; transform: translateX(-46px) rotate(-1.5deg); }
+}
+
+@keyframes zine-stamp-in {
+  0%   { opacity: 0; transform: rotate(10deg) scale(2.2); }
+  55%  { opacity: 1; transform: rotate(-5deg) scale(.9); }
+  100% { opacity: 1; transform: rotate(-4deg) scale(1); }
+}
+
+@keyframes zine-spin { to { transform: rotate(360deg); } }
+
+@keyframes zine-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes zine-flutter {
+  0%, 100% { transform: rotate(-1.2deg) translateY(0); }
+  50%      { transform: rotate(1.4deg) translateY(-5px); }
+}
+
+@keyframes zine-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(320%); }
+}
+
+// ── Основа ───────────────────────────────────────────────────────────────────
+body {
+  font-family: $font-sans;
+}
+
+// Печатный растр под всем приложением
+.layout {
+  position: relative;
+  isolation: isolate;
+  background: $dot-grid 0 0 / 16px 16px, $color-bg;
+}
+
+::selection {
+  background: $color-accent;
+  color: $paper;
+}
+
+.page__scroll > .view {
+  animation: zine-paper-in .5s $ease-out-quart backwards;
+}
+
+// ── Титлбар ──────────────────────────────────────────────────────────────────
+.titlebar {
+  background: $color-bg;
+  backdrop-filter: none;
+  border-bottom: 3px solid $color-accent;
+}
+
+.titlebar__title {
+  font-family: $font-display;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.titlebar__search {
+  background: $paper-04;
+  border: 2px solid $paper-25;
+  border-radius: 0;
+  transition: border-color .16s ease, background .16s ease;
+
+  &:focus-within {
+    border-color: $color-accent;
+    background: $paper-08;
+    box-shadow: 3px 3px 0 $accent-55;
+  }
+}
+
+.titlebar__search-input {
+  font-family: $font-sans;
+
+  &::placeholder { color: $text-dim; }
+}
+
+.titlebar__search-kbd {
+  font-family: $font-mono;
+  font-size: .68rem;
+  border: 1px solid $paper-25;
+  border-radius: 0;
+}
+
+.titlebar__nav-btn,
+.titlebar__icon-btn {
+  border-radius: 0;
+  transition: background .14s ease, color .14s ease, transform .14s ease;
+
+  &:hover {
+    background: $paper-08;
+    color: $color-text;
+  }
+
+  &:active { transform: translate(1px, 1px); }
+}
+
+// ── Сайдбар ──────────────────────────────────────────────────────────────────
+.sidebar { background: transparent; }
+
+.sidebar__link {
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 2px solid transparent;
+  border-radius: 0;
+  transition: color .16s ease, background .16s ease, border-color .16s ease,
+              transform .14s ease, box-shadow .14s ease;
+
+  &:hover {
+    color: $color-text;
+    background: $paper-08;
+    border-color: $paper-25;
+  }
+
+  &:active { transform: translate(1px, 1px); }
+
+  &--active {
+    color: $paper;
+    background: $color-accent;
+    border-color: $color-accent;
+    box-shadow: 3px 3px 0 $paper-50;
+
+    &:hover {
+      background: $color-accent;
+      color: $paper;
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 $paper-50;
+    }
+  }
+}
+
+// ── Кнопка «Совместный просмотр» в сайдбаре ─────────────────────────────────
+.sidebar__link--watch-together {
+  position: relative;
+  color: $color-text-muted;
+
+  &:hover { color: $color-text; }
+}
+
+.sidebar__watch-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  background: $color-success;
+  box-shadow: 0 0 0 2px $color-bg;
+}
+
+// ── Панель контента ──────────────────────────────────────────────────────────
+.content-panel {
+  border-radius: 0;
+  background: transparent;
+  border: 2px solid $paper-16;
+  box-shadow: none;
+}
+
+.schedule-panel-shell {
+  border-radius: 0;
+  border: 2px solid $paper-25;
+  box-shadow: -6px 6px 0 $accent-35;
+}
+
+// ── Кнопки ───────────────────────────────────────────────────────────────────
+.btn {
+  border-radius: 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  border: 2px solid $color-text;
+  background: transparent;
+  color: $color-text;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+  box-shadow: 3px 3px 0 $paper-35;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 $paper-50;
+    background: $color-accent;
+    border-color: $color-accent;
+    color: $paper;
+  }
+
+  &:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 $paper-35;
+  }
+}
+
+.btn-primary {
+  font-family: $font-display;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  background: $paper;
+  border-color: $paper;
+  color: $ink;
+  box-shadow: 5px 5px 0 $color-accent;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 $color-accent;
+    background: $paper;
+    border-color: $paper;
+    color: $ink;
+  }
+
+  &:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 $color-accent;
+  }
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid $color-accent;
+  outline-offset: 2px;
+}
+
+// ── Карточки релизов (вертикальные) ─────────────────────────────────────────
+.release-card-v {
+  border-radius: 0;
+  animation: zine-paper-in .45s $ease-out-quart backwards;
+  transition: transform .22s $ease-spring;
+
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) { animation-delay: #{($i - 1) * .03}s; }
+  }
+
+  .release-card-v__poster {
+    border-radius: 0;
+    overflow: hidden;
+    border: 2px solid $paper-25;
+    background: $film;
+    transition: border-color .2s ease, box-shadow .2s ease;
+
+    img { transition: transform .4s $ease-out-quart, filter .3s ease; }
+  }
+
+  &:hover {
+    transform: translate(-2px, -3px) rotate(-.6deg);
+
+    .release-card-v__poster {
+      border-color: $paper;
+      box-shadow: 6px 6px 0 $color-accent;
+    }
+
+    .release-card-v__poster img {
+      transform: scale(1.05);
+      filter: saturate(1.1);
+    }
+
+    .release-card-v__title { color: $color-accent-hover; }
+  }
+
+  .release-card-v__title {
+    font-weight: 600;
+    transition: color .18s ease;
+  }
+
+  .release-card-v__meta {
+    font-family: $font-mono;
+    font-size: .7rem;
+  }
+
+  .release-card-v__badge {
+    border-radius: 0;
+    font-family: $font-display;
+    font-weight: 700;
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: $color-accent;
+    color: $paper;
+    box-shadow: 2px 2px 0 $ink;
+  }
+}
+
+// ── Карточки релизов (горизонтальные) ────────────────────────────────────────
+.release-card-h {
+  border-radius: 0;
+  border: 2px solid transparent;
+  transition: transform .2s $ease-spring, border-color .2s ease, box-shadow .2s ease, background .2s ease;
+
+  .release-card-h__poster {
+    border-radius: 0;
+    overflow: hidden;
+    border: 2px solid $paper-25;
+    background: $film;
+
+    img { transition: transform .4s $ease-out-quart; }
+  }
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    background: $paper-04;
+    border-color: $paper-25;
+    box-shadow: 5px 5px 0 $accent-35;
+
+    .release-card-h__poster img { transform: scale(1.05); }
+  }
+}
+
+// ── Карточки коллекций ───────────────────────────────────────────────────────
+.collection-card {
+  animation: zine-paper-in .45s $ease-out-quart backwards;
+  transition: transform .22s $ease-spring;
+
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) { animation-delay: #{($i - 1) * .03}s; }
+  }
+
+  .collection-card__media {
+    border-radius: 0;
+    border: 2px solid $paper-25;
+    background: $film;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+
+  .collection-card__image {
+    border-radius: 0;
+    transition: transform .45s $ease-out-quart;
+  }
+
+  &:hover {
+    transform: translate(-2px, -3px) rotate(.5deg);
+
+    .collection-card__media {
+      border-color: $paper;
+      box-shadow: 7px 7px 0 $color-accent;
+    }
+
+    .collection-card__image { transform: scale(1.05); }
+  }
+
+  .collection-card__badge {
+    border-radius: 0;
+    font-family: $font-mono;
+    font-weight: 700;
+  }
+}
+
+// ── Список «Обсуждают сегодня» ───────────────────────────────────────────────
+.overview-discuss-row {
+  border-radius: 0;
+  border-left: 3px solid transparent;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+
+  &:hover {
+    transform: translateX(4px);
+    background: $paper-04;
+    border-left-color: $color-accent;
+  }
+}
+
+// ── Заголовки секций: 01 · ЗАГОЛОВОК ─────────────────────────────────────────
+.overview-section-head {
+  align-items: baseline;
+  gap: .9rem;
+}
+
+.overview-section-head__title {
+  position: relative;
+  font-family: $font-display;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -.01em;
+  color: $color-text;
+  text-shadow: 4px 4px 0 $accent-55;
+
+  // Пунктирная линейка справа — как в макете
+  &::after {
+    content: '';
+    position: absolute;
+    left: calc(100% + .9rem);
+    bottom: .35rem;
+    width: 60vw;
+    max-width: 900px;
+    border-bottom: 2px dashed $paper-25;
+    pointer-events: none;
+  }
+}
+
+.overview-section-head__subtitle {
+  font-family: $font-mono;
+  font-size: .74rem;
+  color: $text-dim;
+}
+
+.overview-section-head__more {
+  position: relative;
+  z-index: 1;
+  border-radius: 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: .8rem;
+  color: $color-text;
+  border: 2px solid $color-text;
+  background: $color-bg;
+  padding: .45rem .85rem;
+  box-shadow: 3px 3px 0 $paper-35;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 $paper-50;
+    background: $color-accent;
+    border-color: $color-accent;
+    color: $paper;
+  }
+
+  &:active { transform: translate(3px, 3px); box-shadow: 0 0 0 $paper-35; }
+}
+
+// ── Заголовки блоков страницы релиза: 02 · ВИДЕО ────────────────────────────
+// Номер рисуем CSS-счётчиком — разметку компонентов трогать не нужно.
+.release-page { counter-reset: zine-section 1; }
+
+.release-page__block-title,
+.release-page__related-title,
+.release-page__recommended-title {
+  display: flex;
+  align-items: baseline;
+  gap: .85rem;
+  font-family: $font-display;
+  font-weight: 900;
+  font-size: 1.55rem;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: $color-text;
+  text-shadow: 4px 4px 0 $accent-55;
+
+  &::before {
+    counter-increment: zine-section;
+    content: counter(zine-section, decimal-leading-zero);
+    flex: none;
+    font-family: $font-mono;
+    font-weight: 700;
+    font-size: .78rem;
+    color: $color-accent;
+    text-shadow: none;
+  }
+
+  // Пунктирная линейка до края
+  &::after {
+    content: '';
+    flex: 1;
+    min-width: 1.5rem;
+    border-bottom: 2px dashed $paper-25;
+    transform: translateY(-.35rem);
+  }
+}
+
+.release-page__block-header {
+  align-items: baseline;
+
+  .release-page__block-title { flex: 1; }
+}
+
+.release-page__block-link,
+.release-page__related-show-all {
+  flex: none;
+  border-radius: 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: .8rem;
+  color: $color-text;
+  border: 2px solid $color-text;
+  background: $color-bg;
+  padding: .45rem .85rem;
+  box-shadow: 3px 3px 0 $paper-35;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+
+  &:hover {
+    opacity: 1;
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 $paper-50;
+    background: $color-accent;
+    border-color: $color-accent;
+    color: $paper;
+  }
+
+  &:active { transform: translate(3px, 3px); box-shadow: 0 0 0 $paper-35; }
+}
+
+// ── Вкладки ──────────────────────────────────────────────────────────────────
+.bookmarks__tab {
+  border-radius: 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  border: 2px solid transparent;
+  transition: color .16s ease, background .16s ease, border-color .16s ease,
+              transform .14s ease, box-shadow .14s ease;
+
+  &:hover {
+    color: $color-text;
+    background: $paper-08;
+    border-color: $paper-25;
+  }
+
+  &:active { transform: translate(1px, 1px); }
+
+  &--active {
+    color: $paper !important;
+    background: $color-accent !important;
+    border-color: $color-accent !important;
+    box-shadow: 3px 3px 0 $paper-50;
+  }
+}
+
+// ── Steam-карусель на «Обзоре» ───────────────────────────────────────────────
+.steam-hero__card {
+  border-radius: 0;
+  border: 3px solid $paper-25;
+  box-shadow: 8px 8px 0 $accent-55;
+}
+
+.steam-hero__title {
+  font-family: $font-display;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.steam-hero__btn {
+  border-radius: 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+
+  &--primary {
+    font-family: $font-display;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    background: $paper;
+    color: $ink;
+    border: 2px solid $paper;
+    box-shadow: 5px 5px 0 $color-accent;
+
+    &:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0 $color-accent;
+      filter: none;
+      background: $paper;
+    }
+
+    &:active { transform: translate(4px, 4px); box-shadow: 0 0 0 $color-accent; }
+  }
+
+  &--ghost {
+    border: 2px solid $color-text;
+    color: $color-text;
+    background: transparent;
+    box-shadow: 3px 3px 0 $paper-35;
+
+    &:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 5px 5px 0 $paper-50;
+      background: $color-accent;
+      border-color: $color-accent;
+      color: $paper;
+    }
+
+    &:active { transform: translate(3px, 3px); box-shadow: 0 0 0 $paper-35; }
+  }
+}
+
+.steam-hero__dot {
+  border-radius: 0;
+
+  .steam-hero__dot-fill {
+    background: $color-accent;
+    transition: transform .18s linear;
+  }
+}
+
+.steam-hero__peek {
+  border-radius: 0;
+  transition: transform .2s ease, box-shadow .2s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 $accent-35;
+  }
+}
+
+// ── Скелетоны: печатная «плёнка» вместо мерцания ────────────────────────────
+.overview-skeleton__block,
+.hero-media__skeleton,
+.release-card-h__skeleton-poster,
+.release-card-h__skeleton-title,
+.release-card-h__skeleton-meta,
+.release-card-h__skeleton-desc {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  background: $film;
+  border: 2px solid $paper-16;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 30%;
+    background: linear-gradient(90deg, transparent, $paper-08, transparent);
+    animation: zine-sweep 1.5s ease-in-out infinite;
+  }
+}
+
+// ── Лоадеры ──────────────────────────────────────────────────────────────────
+.overview-page__loading,
+.discover-page__loading,
+.collection-page__loading,
+.collection-releases__loading,
+.notifications-modal__loading,
+.lobby-modal__loading,
+.anix-comment-wrap__loading,
+.release-loading,
+.watch-page__player-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .9rem;
+  font-family: $font-mono;
+  font-size: .8rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: $text-dim;
+
+  &::before {
+    content: '';
+    width: 2rem;
+    height: 2rem;
+    background: $color-accent;
+    box-shadow: 4px 4px 0 $paper-35;
+    animation: zine-spin 1.1s $ease-spring infinite;
+  }
+}
+
+// ── Модальные окна: бумага на чернилах ──────────────────────────────────────
+.settings-overlay,
+.notifications-modal-overlay,
+.watch-modal__backdrop {
+  backdrop-filter: none;
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+}
+
+.settings-panel,
+.notifications-modal-panel,
+.watch-modal__panel {
+  border-radius: 0;
+  border: 3px solid $paper;
+  box-shadow: 12px 12px 0 $color-accent;
+  animation: zine-pop-in .3s $ease-spring backwards;
+}
+
+.watch-modal__title,
+.notifications-modal__title {
+  font-family: $font-display;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+// ── Выпадающие панели ────────────────────────────────────────────────────────
+.search-dropdown,
+.custom-select__menu,
+.dots-menu {
+  border-radius: 0;
+  background: $color-surface;
+  backdrop-filter: none;
+  border: 2px solid $paper;
+  box-shadow: 6px 6px 0 $color-accent;
+  animation: zine-fold-down .28s $ease-spring backwards;
+  transform-origin: top center;
+}
+
+.custom-select__trigger {
+  border-radius: 0;
+  border: 2px solid $color-text;
+  font-family: $font-sans;
+  font-weight: 600;
+  box-shadow: 3px 3px 0 $paper-35;
+  transition: transform .15s ease, box-shadow .15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 $paper-50;
+  }
+}
+
+.custom-select__option {
+  border-radius: 0;
+  border-bottom: 1px dashed $paper-16;
+
+  &:hover { background: $paper-08; }
+
+  &--selected { color: $color-accent; }
+}
+
+// ── Тултипы ──────────────────────────────────────────────────────────────────
+.tooltip {
+  border-radius: 0;
+  background: $paper;
+  color: $ink;
+  backdrop-filter: none;
+  border: 2px solid $ink;
+  box-shadow: 3px 3px 0 $color-accent;
+  font-family: $font-mono;
+  font-size: .7rem;
+  font-weight: 500;
+}
+
+// ── Скроллбар ────────────────────────────────────────────────────────────────
+.page__v-thumb,
+.page__h-thumb {
+  border-radius: 0;
+  background: $paper-35;
+  transition: background .18s ease;
+
+  &:hover { background: $color-accent; }
+}
+
+// ── Бейдж загрузок ───────────────────────────────────────────────────────────
+.downloads-badge {
+  border-radius: 0;
+  font-family: $font-mono;
+  font-weight: 700;
+  background: $color-accent;
+  color: $paper;
+  box-shadow: 2px 2px 0 $ink;
+}
+
+// ── Плеер ────────────────────────────────────────────────────────────────────
+.watch-page__title {
+  font-family: $font-display;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.watch-page__title-meta,
+.watch-page__time-label {
+  font-family: $font-mono;
+}
+
+.watch-page__ctrl-btn,
+.watch-page__vol-btn {
+  border-radius: 0;
+  transition: background .14s ease, color .14s ease, transform .14s ease;
+
+  &:hover { background: $paper-16; }
+  &:active { transform: translate(1px, 1px); }
+}
+
+.watch-page__progress-bar {
+  background: $hatch;
+  box-shadow: none;
+}
+
+.watch-page__timeline-dot {
+  border-radius: 0;
+  box-shadow: 2px 2px 0 $ink;
+}
+
+.watch-page__ep-nav {
+  border-radius: 0;
+  border: 2px solid $paper-35;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 $accent-55;
+    background: $paper-08;
+  }
+}
+
+.watch-page__float-panel,
+.watch-page__popover-panel {
+  border-radius: 0;
+  background: $color-surface;
+  backdrop-filter: none;
+  border: 2px solid $paper;
+  box-shadow: 7px 7px 0 $color-accent;
+  animation: zine-fold-down .26s $ease-spring backwards;
+  transform-origin: top center;
+}
+
+.watch-page__center-play-btn {
+  border-radius: 0;
+  transition: transform .2s $ease-spring, box-shadow .2s ease;
+  box-shadow: 5px 5px 0 $color-accent;
+
+  &:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 $color-accent; }
+  &:active { transform: translate(2px, 2px); box-shadow: 0 0 0 $color-accent; }
+}
+
+// Панель плеера в главном окне
+.web-player-shell__bar {
+  background: $color-bg;
+  backdrop-filter: none;
+  border-bottom: 3px solid $color-accent;
+}
+
+.web-player-shell__back {
+  border-radius: 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  border: 2px solid $paper-35;
+  background: transparent;
+  transition: transform .14s ease, background .14s ease, border-color .14s ease;
+
+  &:hover { background: $color-accent; border-color: $color-accent; }
+  &:active { transform: translate(1px, 1px); }
+}
+
+.web-player-shell__app {
+  font-family: $font-display;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+// ── Превью кадра на таймлайне ───────────────────────────────────────────────
+.watch-preview {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  transform: translateX(-50%) translateY(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .14s ease, transform .14s ease;
+  z-index: 20;
+
+  &--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.watch-preview__frame {
+  position: relative;
+  width: 168px;
+  height: 94px;
+  background: #000;
+  border: 3px solid $paper;
+  box-shadow: 5px 5px 0 $color-accent;
+  overflow: hidden;
+
+  // Скотч сверху — в духе зина
+  &::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    width: 46px;
+    height: 13px;
+    margin-left: -23px;
+    background: $paper-25;
+    transform: rotate(-3deg);
+    z-index: 2;
+  }
+}
+
+.watch-preview__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity .12s ease;
+
+  &--ready { opacity: 1; }
+}
+
+.watch-preview__wait {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: $font-mono;
+  font-size: 1rem;
+  color: $text-dim;
+}
+
+.watch-preview__time {
+  font-family: $font-mono;
+  font-weight: 700;
+  font-size: .74rem;
+  color: $paper;
+  background: $ink;
+  padding: 2px 8px;
+  box-shadow: 2px 2px 0 $color-accent;
+}
+
+// ── Автопереход: карточка «следующая серия» ─────────────────────────────────
+.watch-next {
+  position: absolute;
+  right: 1.1rem;
+  bottom: 6.5rem;
+  z-index: 12;
+  min-width: 15rem;
+  padding: .85rem .95rem;
+  background: $paper;
+  color: $ink;
+  border: 3px solid $ink;
+  box-shadow: 7px 7px 0 $color-accent;
+  animation: zine-slide-tear .35s $ease-out-quart backwards;
+}
+
+.watch-next__label {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.watch-next__ep {
+  margin-top: .15rem;
+  font-family: $font-display;
+  font-weight: 900;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  color: $ink;
+}
+
+.watch-next__row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .7rem;
+}
+
+.watch-next__go {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: $paper;
+  background: $ink;
+  border: none;
+  padding: .6rem .8rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 $color-accent;
+  transition: transform .14s ease, box-shadow .14s ease;
+
+  &:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 $color-accent; }
+  &:active { transform: translate(3px, 3px); box-shadow: 0 0 0 $color-accent; }
+}
+
+// Полоска обратного отсчёта прямо в кнопке
+.watch-next__go-ring {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: var(--p, 0%);
+  background: $color-accent;
+  transition: width 1s linear;
+}
+
+.watch-next__cancel {
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+  background: none;
+  border: 2px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  padding: .55rem .7rem;
+  cursor: pointer;
+  transition: color .16s ease, border-color .16s ease;
+
+  &:hover { color: $color-accent; border-color: $color-accent; }
+}
+
+// ── Кнопка «следующая серия» в панели управления ────────────────────────────
+.watch-page__next-btn {
+  gap: .4rem;
+
+  .watch-page__next-btn-label {
+    font-family: $font-mono;
+    font-size: .72rem;
+    font-weight: 700;
+  }
+}
+
+// ── Буст громкости ───────────────────────────────────────────────────────────
+.watch-page__vol-slider--boosted {
+  accent-color: $color-accent;
+}
+
+.watch-page__vol-boost-badge {
+  font-family: $font-mono;
+  font-size: .64rem;
+  font-weight: 700;
+  color: $color-accent;
+  white-space: nowrap;
+}
+
+.watch-panel__setting-hint {
+  font-family: $font-mono;
+  font-size: .62rem;
+  font-weight: 500;
+  color: $text-dim;
+  margin-left: .35rem;
+}
+
+
+// ── Продолжить просмотр ──────────────────────────────────────────────────────
+.cw { margin: 0 0 1.6rem; }
+
+.cw__head {
+  display: flex;
+  align-items: baseline;
+  gap: .85rem;
+  margin: 0 0 .9rem;
+}
+
+.cw__title {
+  margin: 0;
+  font-family: $font-display;
+  font-weight: 900;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  color: $color-text;
+  text-shadow: 3px 3px 0 $accent-55;
+}
+
+.cw__rule {
+  flex: 1;
+  border-bottom: 2px dashed $paper-25;
+  transform: translateY(-.3rem);
+}
+
+.cw__row {
+  display: flex;
+  gap: .9rem;
+  overflow-x: auto;
+  padding: .25rem .25rem .75rem;
+  scrollbar-width: thin;
+}
+
+.cw__card {
+  position: relative;
+  flex: 0 0 15.5rem;
+  display: flex;
+  gap: .7rem;
+  align-items: stretch;
+  padding: .6rem;
+  text-align: left;
+  background: $paper-04;
+  border: 2px solid $paper-25;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    border-color: $color-text;
+    background: $paper-08;
+    box-shadow: 6px 6px 0 $color-accent;
+
+    .cw__play { opacity: 1; transform: scale(1); }
+    .cw__forget { opacity: 1; }
+  }
+
+  &:active { transform: translate(2px, 2px); box-shadow: 0 0 0 $color-accent; }
+}
+
+.cw__tape {
+  position: absolute;
+  top: -8px;
+  left: 1.6rem;
+  width: 54px;
+  height: 16px;
+  background: $paper-16;
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+
+.cw__poster {
+  position: relative;
+  flex: none;
+  width: 3.6rem;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: $film;
+  border: 2px solid $paper-25;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.cw__play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: $paper;
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  opacity: 0;
+  transform: scale(.8);
+  transition: opacity .18s ease, transform .18s $ease-spring;
+}
+
+// Полоска прогресса прямо на постере
+.cw__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.cw__bar-fill {
+  display: block;
+  height: 100%;
+  background: $color-accent;
+}
+
+.cw__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .3rem;
+}
+
+.cw__name {
+  font-size: .82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: $color-text;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cw__meta {
+  font-family: $font-mono;
+  font-size: .66rem;
+  color: $text-dim;
+}
+
+.cw__forget {
+  position: absolute;
+  top: .3rem;
+  right: .4rem;
+  font-size: .7rem;
+  line-height: 1;
+  padding: .2rem .3rem;
+  color: $text-dim;
+  opacity: 0;
+  transition: opacity .18s ease, color .18s ease;
+
+  &:hover { color: $color-accent; }
+}
+
+// ── Уменьшенная анимация ─────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .page__scroll > .view,
+  .release-card-v,
+  .collection-card,
+  .settings-panel,
+  .notifications-modal-panel,
+  .watch-modal__panel,
+  .search-dropdown,
+  .custom-select__menu,
+  .dots-menu,
+  .watch-page__float-panel,
+  .watch-page__popover-panel {
+    animation: none;
+  }
+}

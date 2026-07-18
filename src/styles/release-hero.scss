@@ -1,0 +1,681 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  ZINE HERO — шапка страницы аниме по макету «Страница аниме 1b».
+//  Бегущая строка, постер на скотче с жёсткой тенью, штамп рейтинга,
+//  Unbounded-заголовок, #теги, мета-таблица, кнопки с press-lift.
+// ═══════════════════════════════════════════════════════════════════════════
+@use 'variables' as *;
+
+// ── Бегущая строка ───────────────────────────────────────────────────────────
+.zh-ticker {
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 9px 0;
+  margin: 0 0 2rem;
+  background: $paper;
+  border-bottom: 3px solid $color-accent;
+}
+
+.zh-ticker__track {
+  display: inline-flex;
+  animation: zh-marquee 34s linear infinite;
+}
+
+@keyframes zh-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.zh-ticker__text {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: $ink;
+  padding: 0 24px;
+}
+
+// ── Каркас ───────────────────────────────────────────────────────────────────
+.zh {
+  position: relative;
+  margin-bottom: 2.5rem;
+  isolation: isolate;
+}
+
+// Кадр как фактура, а не фотография: в макете фон плоский, поэтому
+// бэкдроп сильно приглушён и обесцвечен — только чтобы задать настроение.
+.zh__backdrop {
+  position: absolute;
+  inset: -1.5rem -1.5rem auto;
+  height: 320px;
+  z-index: -1;
+  overflow: hidden;
+  opacity: .16;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(.85) contrast(1.2);
+  }
+}
+
+// Постер держит левую колонку на обе строки; заголовок тянется на всю ширину
+// справа от него — иначе длинные русские названия сжимаются в узкий столбец.
+.zh__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr) minmax(0, 190px);
+  grid-template-rows: auto 1fr;
+  gap: 1.4rem 2rem;
+  align-items: start;
+}
+
+.zh__poster-col { grid-column: 1; grid-row: 1 / span 2; }
+.zh__head       { grid-column: 2 / -1; grid-row: 1; min-width: 0; }
+.zh__main       { grid-column: 2; grid-row: 2; }
+.zh__aside      { grid-column: 3; grid-row: 2; }
+
+// ── Постер ───────────────────────────────────────────────────────────────────
+.zh__poster-col { min-width: 0; }
+
+.zh__poster-wrap {
+  position: relative;
+  animation: zh-paper-in .7s .05s both;
+}
+
+@keyframes zh-paper-in {
+  0%   { opacity: 0; transform: translateY(30px) rotate(3deg) scale(1.04); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
+.zh__poster {
+  position: relative;
+  transform: rotate(-2deg);
+  border: 3px solid $paper;
+  background: $color-surface;
+  padding: 10px 10px 42px;
+  box-shadow: 12px 12px 0 $accent-55;
+  transition: transform .35s $ease-spring, box-shadow .35s ease;
+
+  &--clickable { cursor: zoom-in; }
+
+  &--clickable:hover {
+    transform: rotate(0deg) translateY(-5px);
+    box-shadow: 16px 16px 0 $color-accent;
+  }
+
+  // «Выпуск» — подпись внизу рамки
+  &::after {
+    content: 'ВЫПУСК · ANIXAPP';
+    position: absolute;
+    left: 13px;
+    bottom: 12px;
+    font-family: $font-display;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: .06em;
+    color: $color-text;
+  }
+}
+
+.zh__poster-frame {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $film;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.zh__poster-empty {
+  font-family: $font-mono;
+  font-size: 12px;
+  letter-spacing: .14em;
+  color: $text-dim;
+}
+
+.zh__tape {
+  position: absolute;
+  background: $paper-25;
+  backdrop-filter: blur(1px);
+  pointer-events: none;
+
+  &--top {
+    top: -13px;
+    left: 34px;
+    width: 96px;
+    height: 26px;
+    transform: rotate(-5deg);
+  }
+
+  &--side {
+    bottom: 34px;
+    right: -20px;
+    width: 92px;
+    height: 26px;
+    transform: rotate(83deg);
+    background: $paper-16;
+  }
+}
+
+// ── Штамп возрастного рейтинга ───────────────────────────────────────────────
+.zh__stamp {
+  position: absolute;
+  top: -22px;
+  right: -14px;
+  z-index: 3;
+  width: 84px;
+  height: 84px;
+  border: 3px solid $color-accent;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $color-accent;
+  background: $color-bg;
+  box-shadow: 5px 5px 0 $paper-50;
+  animation: zh-stamp-in .7s .8s both;
+}
+
+@keyframes zh-stamp-in {
+  0%   { opacity: 0; transform: rotate(10deg) scale(2.2); }
+  55%  { opacity: 1; transform: rotate(-5deg) scale(.9); }
+  75%  { transform: rotate(-3deg) scale(1.06); }
+  100% { opacity: 1; transform: rotate(-4deg) scale(1); }
+}
+
+.zh__stamp-value {
+  font-family: $font-display;
+  font-weight: 900;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.zh__stamp-label {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 8px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+// ── Основная колонка ─────────────────────────────────────────────────────────
+.zh__main { min-width: 0; }
+
+.zh__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  animation: zh-paper-in .6s .15s both;
+}
+
+.zh__chip {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--accent {
+    background: $color-accent;
+    color: $paper;
+    padding: 7px 13px;
+    box-shadow: 3px 3px 0 $paper-50;
+  }
+
+  &--outline {
+    color: $color-text;
+    border: 2px solid $color-text;
+    padding: 5px 13px;
+  }
+}
+
+.zh__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: .55rem;
+  margin: 20px 0 0;
+  animation: zh-paper-in .6s .24s both;
+}
+
+// Иконка названий: базовый .title-info-trigger центрируется — в зине нужен верх.
+:global(.zh__title-row .title-info-trigger) {
+  align-self: flex-start;
+  margin-top: .6rem;
+  font-size: 1.35rem;
+}
+
+.zh__title {
+  margin: 0;
+  font-family: $font-display;
+  font-weight: 900;
+  line-height: 1.04;
+  text-transform: uppercase;
+  color: $color-text;
+  // Без text-wrap:balance: он равняет строки по длине и сбивает заголовок
+  // в узкий прямоугольник вместо широкой шапки.
+  text-wrap: normal;
+
+  // Кегль от длины названия — короткие бьют крупно, длинные остаются в 2–3 строки.
+  &--lg { font-size: clamp(2rem, 3.4vw, 3.1rem); }
+  &--sm { font-size: clamp(1.7rem, 2.7vw, 2.4rem); }
+  &--xs { font-size: clamp(1.45rem, 2.1vw, 1.95rem); }
+}
+
+.zh__title-num {
+  display: inline-block;
+  margin-left: .25em;
+  color: $color-accent;
+  text-shadow: 5px 5px 0 $paper-25;
+  animation: zh-flutter 5s ease-in-out infinite;
+}
+
+@keyframes zh-flutter {
+  0%, 100% { transform: rotate(-1.2deg) translateY(0); }
+  50%      { transform: rotate(1.4deg) translateY(-5px); }
+}
+
+.zh__subtitle {
+  margin: 8px 0 0;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: $color-text-muted;
+  animation: zh-paper-in .6s .31s both;
+}
+
+// ── Теги-жанры ───────────────────────────────────────────────────────────────
+.zh__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  animation: zh-paper-in .6s .38s both;
+}
+
+.zh__tag {
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 13px;
+  color: $color-text;
+  border: 2px solid $color-text;
+  background: transparent;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 $paper-35;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease,
+              border-color .16s ease, color .16s ease;
+
+  &:hover {
+    background: $color-accent;
+    border-color: $color-accent;
+    color: $paper;
+    transform: translate(-1px, -1px) rotate(-1deg);
+    box-shadow: 4px 4px 0 $paper-50;
+  }
+
+  &:nth-child(even):hover { transform: translate(-1px, -1px) rotate(1deg); }
+
+  &:active { transform: translate(2px, 2px); box-shadow: 0 0 0 $paper-35; }
+}
+
+// ── Мета-таблица ─────────────────────────────────────────────────────────────
+.zh__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, auto));
+  justify-content: start;
+  gap: 14px 34px;
+  margin: 24px 0 0;
+  animation: zh-paper-in .6s .45s both;
+}
+
+.zh__meta-cell { min-width: 0; }
+
+.zh__meta-label {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: $text-dim;
+}
+
+.zh__meta-value {
+  margin-top: 3px;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 14px;
+  color: $text-bright;
+}
+
+.zh__meta-link {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: color .16s ease, border-color .16s ease;
+
+  &:hover { color: $color-accent; border-bottom-color: currentColor; }
+}
+
+// ── Примечания / описание ────────────────────────────────────────────────────
+.zh__note {
+  margin: 20px 0 0;
+  padding: 12px 15px;
+  border: 2px dashed $paper-35;
+  background: $paper-04;
+  font-size: .85rem;
+  line-height: 1.55;
+  color: $text-bright;
+
+  &--geo {
+    border-color: $color-accent;
+    background: $accent-08;
+  }
+
+  strong { color: $color-accent; }
+}
+
+.zh__desc-wrap {
+  margin: 22px 0 0;
+  max-width: 640px;
+  animation: zh-paper-in .6s .52s both;
+}
+
+.zh__desc {
+  font-family: $font-sans;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.65;
+  color: $text-soft;
+  text-wrap: pretty;
+
+  :global(a) { color: $color-accent; }
+  :global(p) { margin: 0 0 .55rem; }
+  :global(p:last-child) { margin-bottom: 0; }
+
+  &--collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.zh__desc-toggle {
+  margin-top: .5rem;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 14px;
+  color: $color-accent;
+  background: none;
+  border: none;
+  border-bottom: 2px solid $color-accent;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+  transition: color .16s ease, border-color .16s ease;
+
+  &:hover { color: $color-accent-hover; border-color: $color-accent-hover; }
+}
+
+// ── Действия ─────────────────────────────────────────────────────────────────
+.zh__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 0;
+  animation: zh-paper-in .6s .6s both;
+}
+
+.zh__play {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: $ink;
+  background: $paper;
+  border: none;
+  cursor: pointer;
+  padding: 17px 26px;
+  box-shadow: 6px 6px 0 $color-accent;
+  transition: transform .15s ease, box-shadow .15s ease;
+
+  &:hover:not(.zh__play--disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 9px 9px 0 $color-accent;
+  }
+
+  &:active:not(.zh__play--disabled) {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 $color-accent;
+  }
+
+  &--disabled {
+    cursor: default;
+    background: $paper-16;
+    color: $text-dim;
+    box-shadow: none;
+  }
+}
+
+.zh__play-tri {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 11px solid currentColor;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+}
+
+// Селект статуса под печатный стиль
+.zh__status {
+  :global(.custom-select__trigger) {
+    font-family: $font-sans;
+    font-weight: 600;
+    font-size: 14px;
+    color: $color-text;
+    border: 2px solid $color-text;
+    background: transparent;
+    padding: 13px 18px;
+    border-radius: 0;
+    box-shadow: 3px 3px 0 $paper-35;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+
+  :global(.custom-select__trigger:hover) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 $paper-50;
+  }
+}
+
+.zh__fav {
+  white-space: nowrap;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 14px;
+  color: $color-text;
+  border: 2px solid $color-text;
+  padding: 13px 16px;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 $paper-35;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px) rotate(-1deg);
+    box-shadow: 5px 5px 0 $paper-50;
+  }
+
+  &:active { transform: translate(3px, 3px); box-shadow: 0 0 0 $paper-35; }
+
+  &--on {
+    background: $color-accent;
+    border-color: $color-accent;
+    color: $paper;
+  }
+}
+
+.zh__comments-link {
+  white-space: nowrap;
+  font-family: $font-sans;
+  font-weight: 600;
+  font-size: 14px;
+  color: $color-text-muted;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 13px 6px;
+  transition: color .18s ease;
+
+  &:hover { color: $color-accent; }
+}
+
+// ── Правая колонка ───────────────────────────────────────────────────────────
+.zh__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: zh-paper-in .6s .68s both;
+}
+
+.zh__score {
+  position: relative;
+  border: 3px solid $ink;
+  background: $paper;
+  box-shadow: 7px 7px 0 $color-accent;
+  padding: 18px 16px;
+  text-align: center;
+  transform: rotate(1.5deg);
+  transition: transform .3s $ease-spring;
+
+  &:hover { transform: rotate(0deg); }
+}
+
+.zh__score-tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  margin-left: -44px;
+  width: 88px;
+  height: 22px;
+  background: $accent-35;
+  transform: rotate(-3deg);
+}
+
+.zh__score-value {
+  font-family: $font-display;
+  font-weight: 900;
+  font-size: 50px;
+  line-height: 1;
+  color: $ink;
+}
+
+.zh__score-stars {
+  margin-top: 6px;
+  letter-spacing: 3px;
+  font-size: 16px;
+  font-family: serif;
+}
+
+.zh__score-star {
+  color: color-mix(in srgb, var(--ink) 25%, transparent);
+
+  &--on { color: $color-accent; }
+}
+
+.zh__score-votes {
+  margin-top: 7px;
+  font-family: $font-mono;
+  font-weight: 500;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+.zh__new {
+  border: 2px dashed $paper-50;
+  padding: 12px 14px;
+  font-family: $font-sans;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.55;
+  color: $text-bright;
+  background: $paper-04;
+  animation: zh-flutter 7s ease-in-out infinite;
+}
+
+.zh__new-label {
+  color: $color-accent;
+  font-weight: 700;
+}
+
+// ── Адаптив ──────────────────────────────────────────────────────────────────
+@media (max-width: 1000px) {
+  .zh__grid { grid-template-columns: minmax(0, 220px) minmax(0, 1fr); }
+  .zh__head  { grid-column: 2 / -1; }
+  .zh__main  { grid-column: 2; }
+  .zh__aside {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .zh__score { flex: 0 0 190px; }
+  .zh__new { flex: 0 1 auto; align-self: stretch; }
+}
+
+@media (max-width: 780px) {
+  .zh__grid { grid-template-columns: 1fr; }
+  .zh__poster-col { grid-column: 1; grid-row: 1; }
+  .zh__head  { grid-column: 1; grid-row: 2; }
+  .zh__main  { grid-column: 1; grid-row: 3; }
+  .zh__aside { grid-column: 1; grid-row: 4; flex-direction: column; }
+  .zh__poster-wrap { max-width: 240px; }
+  .zh__score { flex: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zh-ticker__track,
+  .zh__title-num,
+  .zh__new,
+  .zh__stamp,
+  .zh__poster-wrap,
+  .zh__chips,
+  .zh__title-row,
+  .zh__subtitle,
+  .zh__tags,
+  .zh__meta,
+  .zh__desc-wrap,
+  .zh__actions,
+  .zh__aside {
+    animation: none;
+  }
+}

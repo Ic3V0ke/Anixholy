@@ -1,0 +1,1418 @@
+@use 'variables' as *;
+
+// ── Player design tokens ───────────────────────────────────────────────────────
+$p-ctrl-bg:    rgba(16, 16, 16, 0.54);   // все кнопки и прогресс трек
+$p-ctrl-hover: rgba(255, 255, 255, 0.15);
+$p-radius:     44px;
+$p-font-size:  16px;
+
+.app--player-window #app {
+  padding: 0;
+  max-height: 100vh;
+}
+
+.view-watch {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.watch-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+// Скрытый интерфейс (idle) — без курсора, пока не подвинули мышь
+.watch-page--chrome-hidden {
+  cursor: none;
+
+  .watch-page__player-area,
+  .watch-page__iframe,
+  .watch-page__video,
+  .watch-page__upscale-canvas {
+    cursor: none;
+  }
+}
+
+// ── Player wrap ────────────────────────────────────────────────────────────────
+
+.watch-page--anidesk .watch-page__player-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 200px;
+  background: #000;
+  width: 100%;
+  height: 100%;
+}
+
+.watch-page__player-wrap--cursor-hidden {
+  cursor: none;
+
+  .watch-page__tap-overlay,
+  .watch-page__tap-layer { cursor: none; }
+}
+
+// ── Loading / error ────────────────────────────────────────────────────────────
+
+.watch-page__player-loading,
+.watch-page__player-error {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  z-index: 5;
+}
+
+.watch-page__player-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.watch-page__player-loading {
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    margin-top: -14px;
+    border: 3px solid var(--color-accent);
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    animation: watch-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes watch-spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── Video / canvas / iframe ────────────────────────────────────────────────────
+
+.watch-page__player-area {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.watch-page__iframe,
+.watch-page__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  object-fit: contain;
+}
+
+.watch-page__video { background: #000; }
+
+.watch-page__debug-hud {
+  position: absolute;
+  left: 10px;
+  top: 90px;
+  z-index: 50;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.62rem;
+  line-height: 1.4;
+  font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  pointer-events: none;
+  max-width: min(440px, 94vw);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.watch-page__upscale-canvas {
+  // Размеры задаются JS (style.width/height) — canvas не поддерживает object-fit
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+
+  &[hidden] { display: none; }
+}
+
+.watch-page__video--hidden-for-upscale { visibility: hidden; }
+
+// ── Lobby: ожидание синхронизации ─────────────────────────────────────────────
+
+.watch-page__lobby-wait {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.78);
+  pointer-events: none;
+}
+
+.watch-page__lobby-wait-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.watch-page__lobby-wait-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+}
+
+.watch-page__lobby-wait-text,
+.watch-page__lobby-wait-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.watch-page__lobby-wait-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+// ── GUI overlay ────────────────────────────────────────────────────────────────
+
+.watch-page__gui-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+  opacity: 1;
+  visibility: visible;
+
+  // Top gradient (title area)
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 120px;
+    background: linear-gradient(180deg, rgba(9, 9, 9, 0.9) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  // Bottom gradient (controls area)
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 160px;
+    background: linear-gradient(0deg, rgba(9, 9, 9, 0.9) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+// Allow pointer events on interactive children
+.watch-page__top-bar,
+.watch-page__tap-layer,
+.watch-page__bottom-controls {
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+// ── Top bar ────────────────────────────────────────────────────────────────────
+
+.watch-page__top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.watch-page__title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.watch-page__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.watch-page__title-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: $p-font-size;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.watch-page__title-sep {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.watch-page__dub-hint {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+// Prev / Next episode navigation buttons in top bar
+.watch-page__ep-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: $p-radius;
+  background: $p-ctrl-bg;
+  border: none;
+  color: #fff;
+  font-size: $p-font-size;
+  font-weight: 400;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  &:hover { background: $p-ctrl-hover; }
+}
+
+.watch-page__ep-nav-placeholder {
+  // Invisible spacer so title stays centered when one nav button is hidden
+  height: 40px;
+  min-width: 120px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+// Two-line nav: «Серия N» + «в озвучке (…)» (prev / next / alt next)
+.watch-page__ep-nav--alt-next {
+  flex-direction: row;
+  align-items: center;
+  height: auto;
+  min-height: 40px;
+  padding: 6px 14px 6px 18px;
+  gap: 10px;
+}
+
+.watch-page__ep-nav--alt-prev {
+  padding: 6px 18px 6px 14px;
+
+  .watch-page__ep-nav-alt-inner {
+    align-items: flex-start;
+  }
+}
+
+.watch-page__ep-nav-alt-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.watch-page__ep-nav-main {
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.watch-page__ep-nav-sub {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.15;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+// ── Tap layer (fills middle) ───────────────────────────────────────────────────
+
+.watch-page__tap-layer {
+  flex: 1;
+  min-height: 0;
+  cursor: pointer;
+}
+
+// ── Center play button ─────────────────────────────────────────────────────────
+
+.watch-page__center-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  pointer-events: auto;
+
+  &--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.watch-page__center-play-btn {
+  width: 142px;
+  height: 142px;
+  border-radius: 44px;
+  background: $p-ctrl-bg;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.2s, transform 0.15s;
+
+  &:hover {
+    background: rgba(30, 30, 30, 0.72);
+    transform: scale(1.04);
+  }
+}
+
+.watch-page--iframe-mode .watch-page__center-play { display: none; }
+
+// ── Bottom controls ────────────────────────────────────────────────────────────
+
+.watch-page__bottom-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 24px;
+  flex-shrink: 0;
+}
+
+// ── Timeline row ───────────────────────────────────────────────────────────────
+
+.watch-page__timeline-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+// Time labels row — above the progress bar
+.watch-page__times {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.watch-page__time-label {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  color: #fff;
+  text-shadow: 0px 0px 4px rgba(16, 16, 16, 0.54);
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.watch-page__progress-wrap {
+  width: 100%;
+  cursor: pointer;
+  padding: 4px 0; // увеличивает кликабельную область
+}
+
+.watch-page__timeline {
+  --progress-position: 0%;
+  --loaded-position: 0%;
+  width: 100%;
+  height: 6px;
+  background: $p-ctrl-bg;
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+}
+
+.watch-page__timeline-loaded {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: var(--loaded-position);
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.watch-page__progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: var(--progress-position);
+  background: var(--color-accent);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+.watch-page__timeline-dot {
+  position: absolute;
+  left: var(--progress-position);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  z-index: 2;
+}
+
+// ── Button row ────────────────────────────────────────────────────────────────
+
+.watch-page__btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  position: relative; // for popover
+}
+
+.watch-page__btns-left,
+.watch-page__btns-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+// ── Control button base ────────────────────────────────────────────────────────
+
+.watch-page__ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 40px;
+  min-width: 60px;
+  padding: 0 20px;
+  border-radius: $p-radius;
+  background: $p-ctrl-bg;
+  border: none;
+  color: #fff;
+  font-size: $p-font-size;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  svg { flex-shrink: 0; }
+
+  &:hover { background: $p-ctrl-hover; }
+
+  // icon-only (no text): keep square-ish
+  &:not(.watch-page__ctrl-btn--text) {
+    min-width: 60px;
+    padding: 0 20px;
+  }
+
+  &--text {
+    padding: 0 20px;
+  }
+
+  &--active {
+    background: color-mix(in srgb, var(--color-accent) 30%, rgba(16, 16, 16, 0.54));
+  }
+
+  &--upscale-on {
+    color: var(--color-accent);
+    background: $p-ctrl-bg;
+    svg { filter: drop-shadow(0 0 4px var(--color-accent)); }
+  }
+}
+
+// ── Open browser button (iframe fallback) ──────────────────────────────────────
+
+.watch-page__open-browser {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: $color-accent;
+  background: transparent;
+  border: 1px solid $color-accent;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background $transition, color $transition;
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+    color: $color-accent-hover;
+  }
+}
+
+// ── Volume hover-expand ────────────────────────────────────────────────────────
+
+.watch-page__vol-wrap {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border-radius: $p-radius;
+  background: $p-ctrl-bg;
+  overflow: hidden;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(20, 20, 20, 0.62);
+
+    .watch-page__vol-btn {
+      margin-right: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+    }
+
+    .watch-page__vol-slider-wrap {
+      max-width: 100px;
+      opacity: 1;
+      padding-right: 24px;
+    }
+  }
+}
+
+.watch-page__vol-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  width: 60px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+
+.watch-page__vol-slider-wrap {
+  max-width: 0;
+  opacity: 0;
+  transition: max-width 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+  display: flex;
+  align-items: center;
+  padding-right: 0;
+}
+
+.watch-page__vol-slider {
+  width: 76px;
+  height: 4px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// ── Popover anchor + floating panel ───────────────────────────────────────────
+
+.watch-page__popover-anchor {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+// Фиксированная высота: список не «прыгает» при поиске (мало строк)
+$watch-float-panel-height: min(480px, 70vh);
+
+.watch-page__float-panel {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  right: 0;
+  width: min(340px, 90vw);
+  height: $watch-float-panel-height;
+  min-height: $watch-float-panel-height;
+  max-height: $watch-float-panel-height;
+  z-index: 300;
+  filter: drop-shadow(0 12px 40px rgba(0, 0, 0, 0.8));
+  transform-origin: bottom right;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  // The inner watch-panel fills this container
+  .watch-panel {
+    position: relative;
+    top: auto; right: auto; bottom: auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .watch-panel__loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .watch-panel__scroll-page {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+// ── Settings float panel (auto-height, no scroll needed) ──────────────────────
+
+.watch-page__float-panel--settings {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  width: min(300px, 90vw);
+
+  .watch-panel {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    flex: 0 0 auto; // don't stretch
+  }
+}
+
+// ── Settings panel body ────────────────────────────────────────────────────────
+
+.watch-panel {
+
+  &__settings-body {
+    padding: 4px 0 6px;
+  }
+
+  // Row with chip options (column)
+  &__setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    &:last-child { border-bottom: none; }
+
+    // Row with a toggle (label left, switch right)
+    &--toggle {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  &__setting-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    svg { flex-shrink: 0; }
+  }
+
+  &__setting-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__chip {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+    line-height: 1;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.13);
+      color: #fff;
+    }
+
+    &--active {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+
+  // iOS-style toggle switch
+  &__toggle {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.22s;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+      transition: transform 0.22s, background 0.22s;
+    }
+
+    &--on {
+      background: var(--color-accent);
+
+      &::after {
+        transform: translateX(16px);
+        background: #fff;
+      }
+    }
+  }
+}
+
+// ── Forced aspect-ratio video classes ─────────────────────────────────────────
+// Mirror the competitor approach: height 100%, centered, width computed from ratio.
+// The base video is position:absolute; inset:0; width:100%; height:100%.
+// Overriding to height:100% + left:50% + translateX(-50%) + aspect-ratio
+// lets the browser compute the correct width automatically.
+
+.watch-page__video--ratio {
+  inset: auto !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  height: 100% !important;
+  overflow: hidden !important;
+
+  &-16-9 { aspect-ratio: 16 / 9; }
+  &-4-3  { aspect-ratio: 4 / 3;  }
+  &-21-9 { aspect-ratio: 21 / 9; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+.watch-page__popover-panel {
+  width: min(360px, 90vw);
+  max-height: min(420px, 60vh);
+  background: rgba(18, 18, 18, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &--series { width: min(480px, 92vw); }
+}
+
+.watch-page__popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.watch-page__popover-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.watch-page__popover-close {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 2px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+  &::after { transform: translate(-50%, -50%) rotate(-45deg); }
+  &:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+}
+
+.watch-page__popover-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.watch-page__popover-page {
+  flex: 1;
+  min-height: 0;
+  --page-scrollbar-offset: 2px;
+}
+
+.watch-page__popover-load {
+  padding: 16px 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.watch-page__popover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+}
+
+.watch-page__popover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover { background: rgba(255, 255, 255, 0.12); }
+  &--active {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    color: #fff;
+  }
+}
+
+.watch-page__popover-item-text {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-page__popover-check {
+  flex-shrink: 0;
+  margin-left: 8px;
+  color: $color-accent;
+}
+
+.watch-page__popover-watched {
+  flex-shrink: 0;
+  margin-left: 6px;
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+// ── Series popover: search input ──────────────────────────────────────────────
+
+.watch-page__popover-search-wrap {
+  padding: 8px 10px 4px;
+  flex-shrink: 0;
+}
+
+.watch-page__popover-search {
+  width: 100%;
+  padding: 7px 11px;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  transition: border-color 0.18s;
+  box-sizing: border-box;
+
+  &::placeholder { color: rgba(255, 255, 255, 0.32); }
+  &:focus { border-color: rgba(255, 255, 255, 0.28); }
+}
+
+// ── Series popover: episode grid ──────────────────────────────────────────────
+
+.watch-page__popover-ep-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 4px;
+  padding: 6px 10px 10px;
+}
+
+.watch-page__popover-ep-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  padding: 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  &--active {
+    background: color-mix(in srgb, var(--color-accent) 28%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+
+    .watch-page__popover-ep-num { color: #fff; font-weight: 700; }
+  }
+
+  &--watched .watch-page__popover-ep-num { color: rgba(255, 255, 255, 0.42); }
+}
+
+.watch-page__popover-ep-num {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.watch-page__popover-ep-check {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.48);
+  line-height: 1;
+}
+
+// ── Dubbing popover: loading spinner ─────────────────────────────────────────
+
+@keyframes watch-popover-spin {
+  to { transform: rotate(360deg); }
+}
+
+.watch-page__popover-spinner {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  animation: watch-popover-spin 0.55s linear infinite;
+}
+
+.watch-page__popover-item--loading {
+  opacity: 0.8;
+  cursor: default;
+}
+
+// ── Side panels: episodes / dubbing ──────────────────────────────────────────
+
+.watch-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 190;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.watch-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(340px, 90%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 12, 12, 0.96);
+  backdrop-filter: blur(16px);
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0 0 5px 0;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 14px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    flex-shrink: 0;
+  }
+
+  &__header-left    { display: flex; align-items: center; gap: 8px; }
+  &__header-actions { display: flex; align-items: center; gap: 4px; }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__icon-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.55);
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+
+    &:hover    { background: rgba(255,255,255,0.1);  color: #fff; }
+    &--active  { background: rgba(255,255,255,0.12); color: #fff; }
+  }
+
+  &__search-wrap {
+    padding: 8px 12px 4px;
+    flex-shrink: 0;
+  }
+
+  &__search {
+    width: 100%;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    outline: none;
+    box-sizing: border-box;
+
+    &::placeholder { color: rgba(255, 255, 255, 0.35); }
+    &:focus        { border-color: rgba(255, 255, 255, 0.25); }
+  }
+
+  &__loading,
+  &__empty {
+    padding: 24px 16px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  // Custom Page scroll wrapper
+  &__scroll-page {
+    flex: 1;
+    min-height: 0;
+
+    // Inner page__scroll fills available space
+    .page__scroll {
+      padding: 0 !important;
+    }
+  }
+
+  // Episode row
+  &__ep-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 11px 14px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.05); }
+
+    &--active {
+      background: rgba(255, 255, 255, 0.07);
+      color: #fff;
+      .watch-panel__ep-label { font-weight: 600; }
+    }
+  }
+
+  &__ep-icon  { flex-shrink: 0; display: flex; align-items: center; }
+  &__ep-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  // Dubbing section label
+  &__section {
+    padding: 10px 14px 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  // Dubbing row
+  &__dub-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 14px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.05); }
+
+    &--active {
+      background: rgba(255, 255, 255, 0.07);
+      .watch-panel__dub-name { color: #fff; font-weight: 600; }
+    }
+  }
+
+  &__dub-av {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &__dub-img             { width: 100%; height: 100%; object-fit: cover; }
+  &__dub-av-placeholder  { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.6); }
+
+  &__dub-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__dub-name {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__dub-meta  { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+
+  &__dub-views {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.78rem;
+    font-weight: 600;
+    min-width: 28px;
+    text-align: right;
+  }
+
+  &__dub-eye { flex-shrink: 0; color: rgba(255,255,255,0.35); }
+}
+
+// ── Lobby: panel ──────────────────────────────────────────────────────────────
+
+.watch-lobby-panel {
+  position: absolute;
+  bottom: 120px; // above bottom controls (timeline + button row)
+  left: 16px;
+  z-index: 101;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &[hidden] { display: none !important; }
+}
+
+.watch-lobby-panel__avatars {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.watch-lobby-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 65%, transparent);
+  border: 2px solid rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-left: -7px;
+  overflow: hidden;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  animation: lobby-av-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  &:first-child { margin-left: 0; }
+
+  &--more {
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 11px;
+    letter-spacing: -0.5px;
+  }
+}
+
+.watch-lobby-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes lobby-av-enter {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.watch-lobby-panel__log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.watch-lobby-log__entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 240px;
+  overflow: hidden;
+  white-space: nowrap;
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity  0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &--entering { transform: translateX(-14px); opacity: 0; }
+  &--leaving  { transform: translateX(-10px); opacity: 0; }
+}
+
+.watch-lobby-log__name {
+  color: $color-accent;
+  font-weight: 600;
+  flex-shrink: 0;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-lobby-log__action {
+  color: rgba(255, 255, 255, 0.78);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Anime4K upscale ────────────────────────────────────────────────────────────
+
+.watch-page__icon-btn--upscale-active {
+  color: $color-accent !important;
+  border-color: $color-accent !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+
+  svg { filter: drop-shadow(0 0 4px $color-accent); }
+}

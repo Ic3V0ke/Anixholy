@@ -1,0 +1,206 @@
+@use 'variables' as *;
+
+.page {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  // Базовые CSS‑переменные: можно переопределять на конкретной странице/контейнере.
+  --page-scrollbar-offset: 14px;
+  --page-scroll-padding: 0;
+}
+
+.page__scroll {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+  padding: var(--page-scroll-padding);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+.page--padded {
+  --page-scroll-padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .page--padded {
+    --page-scroll-padding: 1rem;
+  }
+}
+
+// Компактная область с кастомным скроллом (модалки, dropdown)
+.page--scroll-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  --page-scrollbar-offset: 3px;
+}
+
+// Страница чата: padding только по горизонтали
+.page--chat .page__scroll {
+  padding: 0 0;
+}
+
+// Итоги года: на весь viewport панели контента, без скролла страницы
+.page--wrapped {
+  --page-scroll-padding: 0;
+
+  .page__scroll {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+}
+
+// Комментарии / ответы: скролл внутри списка, composer закреплён снизу
+.page__scroll:has(> .view.anix-comments-page) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+// Вертикальный скроллбар — справа, всегда поверх контента страницы
+.page__v-track {
+  position: absolute;
+  top: var(--page-scrollbar-offset);
+  right: var(--page-scrollbar-offset);
+  bottom: var(--page-scrollbar-offset);
+  width: 10px;
+  padding: 4px 0;
+  z-index: 100;
+  opacity: 0.22;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+  cursor: grab;
+}
+
+.page--v-scrollbar-visible .page__v-track {
+  opacity: 1;
+}
+
+.page__v-track:active {
+  cursor: grabbing;
+}
+
+.page__v-thumb {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  min-height: 24px;
+  background: $color-border;
+  border-radius: 4px;
+  cursor: grab;
+  transition: background $transition, left $transition, right $transition;
+
+  &:hover {
+    background: $color-text-muted;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &--active {
+    left: 0;
+    right: 0;
+    background: $color-accent !important;
+    animation: page-thumb-bounce 0.4s ease;
+  }
+
+  &--release {
+    animation: page-thumb-release 0.35s ease forwards;
+  }
+}
+
+// Горизонтальный скроллбар — показываем только при реальном горизонтальном overflow
+.page:not(.page--has-h-scroll) .page__h-track {
+  display: none;
+}
+
+.page__h-track {
+  position: absolute;
+  left: var(--page-scrollbar-offset);
+  right: var(--page-scrollbar-offset);
+  bottom: var(--page-scrollbar-offset);
+  height: 10px;
+  padding: 0 4px;
+  z-index: 100;
+  opacity: 0.22;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+  cursor: grab;
+}
+
+.page--h-scrollbar-visible .page__h-track {
+  opacity: 1;
+}
+
+.page__h-track:active {
+  cursor: grabbing;
+}
+
+.page--v-scrollbar-visible .page__h-track {
+  right: calc(var(--page-scrollbar-offset) + 10px);
+}
+
+.page--h-scrollbar-visible .page__v-track {
+  bottom: calc(var(--page-scrollbar-offset) + 10px);
+}
+
+.page__h-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  min-width: 24px;
+  background: $color-border;
+  border-radius: 4px;
+  cursor: grab;
+  transition: background $transition, top $transition, bottom $transition;
+
+  &:hover {
+    background: $color-text-muted;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &--active {
+    top: 0;
+    bottom: 0;
+    background: $color-accent !important;
+    animation: page-thumb-bounce 0.4s ease;
+  }
+
+  &--release {
+    animation: page-thumb-release 0.35s ease forwards;
+  }
+}
+
+@keyframes page-thumb-bounce {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent); }
+  50%  { box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes page-thumb-release {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 40%, transparent); }
+  50%  { box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}

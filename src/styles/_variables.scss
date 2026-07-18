@@ -1,0 +1,163 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  ZINE DESIGN TOKENS
+//  Печатный «зин»: чернильный фон, бумага, красно-оранжевый акцент,
+//  жёсткие тени без размытия, толстые рамки, лёгкие повороты.
+// ═══════════════════════════════════════════════════════════════════════════
+
+:root {
+  // ── Базовые переменные темы (их же переопределяют кастомные темы) ──────────
+  --color-bg:            #17151a; // чернила — фон страницы
+  --color-surface:       #211e26; // карточки / хром
+  --color-surface-hover: #29252f;
+  --color-border:        #46404f;
+  --color-text:          #f5f1e6; // бумага
+  --color-text-muted:    #8d8571;
+  --color-accent:        #e04836; // киноварь
+  --color-accent-hover:  #f2624f;
+  --color-success:       #2e7d4f;
+  --color-error:         #c0392b;
+  --font-sans:           'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  // ── Zine-специфика (выводится из темы → кастомные темы продолжают работать) ─
+  --font-display: 'Unbounded', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Consolas', monospace;
+
+  /** Бумага — светлая плоскость: инвертированные секции, кнопки, карточки. */
+  --paper:        color-mix(in srgb, var(--color-text) 96%, #fff);
+  --paper-bright: color-mix(in srgb, var(--color-text) 82%, #fff);
+  /** Чернила — тёмная плоскость: текст на бумаге. */
+  --ink:          var(--color-bg);
+  --accent-dark:  color-mix(in srgb, var(--color-accent) 82%, #000);
+
+  // Оттенки текста на тёмном
+  --text-bright: color-mix(in srgb, var(--color-text) 92%, transparent);
+  --text-soft:   color-mix(in srgb, var(--color-text) 72%, var(--color-text-muted));
+  --text-dim:    color-mix(in srgb, var(--color-text-muted) 82%, var(--color-bg));
+
+  // Полупрозрачная бумага — рамки/подложки на тёмном
+  --paper-04: color-mix(in srgb, var(--color-text) 4%, transparent);
+  --paper-08: color-mix(in srgb, var(--color-text) 8%, transparent);
+  --paper-16: color-mix(in srgb, var(--color-text) 16%, transparent);
+  --paper-25: color-mix(in srgb, var(--color-text) 25%, transparent);
+  --paper-35: color-mix(in srgb, var(--color-text) 35%, transparent);
+  --paper-50: color-mix(in srgb, var(--color-text) 50%, transparent);
+
+  --accent-08: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  --accent-20: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  --accent-35: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  --accent-55: color-mix(in srgb, var(--color-accent) 55%, transparent);
+
+  // Точечная сетка фона (печатный растр)
+  --dot-grid: radial-gradient(var(--paper-04) 1.1px, transparent 1.1px);
+
+  // Диагональная штриховка — заполнение прогресса
+  --hatch: repeating-linear-gradient(-45deg,
+    var(--color-accent) 0 8px, var(--accent-dark) 8px 16px);
+
+  // «Плёнка» — заглушка постера/кадра
+  --film: repeating-linear-gradient(45deg,
+    var(--color-surface) 0 14px, var(--color-surface-hover) 14px 28px);
+
+  --ease-out-quart: cubic-bezier(.16,.84,.3,1);
+  --ease-spring:    cubic-bezier(.2,.8,.2,1);
+}
+
+// ── SCSS aliases → CSS custom properties ─────────────────────────────────────
+$font-sans:    var(--font-sans);
+$font-display: var(--font-display);
+$font-mono:    var(--font-mono);
+
+$color-bg:            var(--color-bg);
+$color-surface:       var(--color-surface);
+$color-surface-hover: var(--color-surface-hover);
+$color-border:        var(--color-border);
+$color-text:          var(--color-text);
+$color-text-muted:    var(--color-text-muted);
+$color-accent:        var(--color-accent);
+$color-accent-hover:  var(--color-accent-hover);
+$color-success:       var(--color-success);
+$color-error:         var(--color-error);
+
+$paper:        var(--paper);
+$paper-bright: var(--paper-bright);
+$ink:          var(--ink);
+$accent-dark:  var(--accent-dark);
+
+$text-bright: var(--text-bright);
+$text-soft:   var(--text-soft);
+$text-dim:    var(--text-dim);
+
+$paper-04: var(--paper-04);
+$paper-08: var(--paper-08);
+$paper-16: var(--paper-16);
+$paper-25: var(--paper-25);
+$paper-35: var(--paper-35);
+$paper-50: var(--paper-50);
+
+$accent-08: var(--accent-08);
+$accent-20: var(--accent-20);
+$accent-35: var(--accent-35);
+$accent-55: var(--accent-55);
+
+$dot-grid: var(--dot-grid);
+$hatch:    var(--hatch);
+$film:     var(--film);
+
+$ease-out-quart: var(--ease-out-quart);
+$ease-spring:    var(--ease-spring);
+
+// В зине углы прямые — радиусы почти нулевые.
+$radius-sm: 0px;
+$radius-md: 0px;
+$radius-lg: 0px;
+$transition: .18s ease;
+$shadow: 6px 6px 0 var(--accent-55);
+
+// ── Миксины печатного стиля ──────────────────────────────────────────────────
+
+/** Жёсткая тень без размытия — подпись стиля. */
+@mixin hard-shadow($x: 6px, $color: var(--color-accent)) {
+  box-shadow: #{$x} #{$x} 0 #{$color};
+}
+
+/**
+ * Приподнимается к левому-верхнему углу, тень растёт;
+ * при нажатии «вдавливается» в свою тень.
+ */
+@mixin press-lift($base: 6px, $lift: 9px, $color: var(--color-accent)) {
+  transition: transform .15s ease, box-shadow .15s ease;
+  box-shadow: #{$base} #{$base} 0 #{$color};
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: #{$lift} #{$lift} 0 #{$color};
+  }
+
+  &:active {
+    transform: translate(#{$base}, #{$base});
+    box-shadow: 0 0 0 #{$color};
+  }
+}
+
+/** Полоска скотча поверх угла карточки. */
+@mixin tape($w: 88px, $h: 22px, $rot: -4deg) {
+  content: '';
+  position: absolute;
+  width: #{$w};
+  height: #{$h};
+  background: var(--paper-25);
+  transform: rotate(#{$rot});
+  backdrop-filter: blur(1px);
+  pointer-events: none;
+}
+
+/** Заголовок секции: моно-номер + Unbounded 900 uppercase. */
+@mixin zine-heading($size: 2rem) {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: #{$size};
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-shadow: 4px 4px 0 var(--accent-55);
+}

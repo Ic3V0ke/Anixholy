@@ -1,0 +1,828 @@
+@use 'variables' as *;
+
+@keyframes watch-modal-in {
+  from { opacity: 0; transform: translateY(0.75rem) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes watch-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.watch-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.watch-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(9px);
+  cursor: pointer;
+}
+
+.watch-modal__panel {
+  position: relative;
+  width: min(52rem, 100%);
+  height: min(88vh, 48rem);
+  max-height: min(88vh, 48rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: color-mix(in srgb, $color-surface 94%, black);
+  border: 1px solid color-mix(in srgb, $color-border 82%, transparent);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.68);
+  animation: watch-modal-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.watch-modal__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.05rem 1.15rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, $color-border 70%, transparent);
+  flex-shrink: 0;
+}
+
+.watch-modal__head-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.watch-modal__head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.watch-modal__head-back,
+.watch-modal__head-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: background $transition, color $transition, transform 0.15s ease;
+
+  svg {
+    transition: transform 0.18s ease;
+  }
+
+  &:hover:not(:disabled) {
+    background: $color-surface-hover;
+    color: $color-text;
+    transform: scale(1.04);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: wait;
+  }
+
+  &--spinning svg {
+    animation: watch-modal-spin 0.9s linear infinite;
+  }
+}
+
+@keyframes watch-modal-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.watch-modal__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.watch-modal__subtitle {
+  max-width: 36rem;
+  margin: 0.2rem 0 0;
+  color: $color-text-muted;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-modal__close {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, $color-surface-hover 76%, transparent);
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: background $transition, color $transition, transform 0.15s ease;
+
+  &:hover {
+    background: $color-surface-hover;
+    color: $color-text;
+    transform: scale(1.04);
+  }
+}
+
+.watch-modal__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.watch-modal__page {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  --page-scroll-padding: 0;
+  --page-scrollbar-offset: 0.45rem;
+}
+
+.watch-modal__page .page__scroll {
+  padding: 0 0.35rem 0 0;
+  scroll-behavior: smooth;
+}
+
+.watch-modal__page .page__v-track {
+  top: 0.75rem;
+  right: 0.35rem;
+  bottom: 0.75rem;
+  width: 0.45rem;
+  padding: 0;
+  opacity: 0.28;
+  border-radius: 999px;
+  background: color-mix(in srgb, $color-bg 70%, transparent);
+  transition: opacity 0.18s ease, background $transition;
+}
+
+.watch-modal__page.page--v-scrollbar-visible .page__v-track {
+  opacity: 1;
+}
+
+.watch-modal__page .page__v-thumb {
+  left: 0;
+  right: 0;
+  min-height: 2.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, $color-text-muted 52%, transparent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+
+  &:hover {
+    background: color-mix(in srgb, $color-accent 78%, white 4%);
+  }
+
+  &--active {
+    background: $color-accent !important;
+  }
+}
+
+.watch-modal__updates-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, $color-text-muted 35%, transparent) transparent;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, $color-text-muted 35%, transparent);
+    border-radius: 999px;
+  }
+}
+
+.watch-modal__mobile-list,
+.watch-modal__episodes-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.95rem 0.9rem 0.95rem 0.95rem;
+}
+
+.watch-modal__variants {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0.75rem 0.9rem 0.95rem 0.95rem;
+}
+
+.watch-modal__filters {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid color-mix(in srgb, $color-border 55%, transparent);
+  margin-bottom: 0.2rem;
+}
+
+.watch-modal__filter {
+  position: relative;
+  padding: 0.58rem 1.05rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: $color-text-muted;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color $transition;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0.65rem;
+    right: 0.65rem;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: $color-accent;
+    transform: scaleX(0);
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  &:hover {
+    color: $color-text;
+  }
+
+  &--active {
+    color: $color-text;
+
+    &::after {
+      transform: scaleX(1);
+    }
+  }
+}
+
+.watch-modal__variant-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.watch-modal__variant-row {
+  display: flex;
+  align-items: center;
+  gap: 0.82rem;
+  width: 100%;
+  padding: 0.7rem 0.2rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, $color-border 45%, transparent);
+  background: transparent;
+  color: $color-text;
+  text-align: left;
+  cursor: pointer;
+  transition: background $transition, padding-left $transition;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, $color-surface-hover 60%, transparent);
+    padding-left: 0.45rem;
+  }
+}
+
+.watch-modal__variant-avatar {
+  width: 2.85rem;
+  height: 2.85rem;
+  flex-shrink: 0;
+  border-radius: $radius-md;
+  background: $color-border center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+
+  &--mic {
+    display: grid;
+    place-items: center;
+    color: $color-text-muted;
+    background: color-mix(in srgb, $color-bg 88%, white 3%);
+
+    svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      opacity: 0.55;
+    }
+  }
+}
+
+.watch-modal__variant-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.watch-modal__variant-name {
+  display: block;
+  font-size: 0.93rem;
+  font-weight: 650;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: $color-text;
+}
+
+.watch-modal__variant-ep {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: $color-text-muted;
+  line-height: 1.2;
+}
+
+.watch-modal__variant-views-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.6rem 0.28rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, $color-bg 80%, transparent);
+  border: 1px solid color-mix(in srgb, $color-border 60%, transparent);
+  color: $color-text-muted;
+  font-size: 0.78rem;
+  font-weight: 650;
+
+  svg {
+    width: 0.82rem;
+    height: 0.82rem;
+    opacity: 0.75;
+  }
+}
+
+.watch-modal__load-sentinel {
+  height: 1px;
+  flex-shrink: 0;
+}
+
+.watch-modal__load-more-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 0 0.5rem;
+  gap: 0.5rem;
+}
+
+.watch-modal__load-status {
+  color: $color-text-muted;
+  font-size: 0.84rem;
+}
+
+.watch-modal__loading {
+  color: $color-text-muted;
+  font-size: 0.9rem;
+  padding: 1rem;
+
+  &--center {
+    padding: 2rem;
+    text-align: center;
+  }
+}
+
+.watch-modal__updates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.85rem 1rem 1.25rem;
+}
+
+.watch-modal__update-row {
+  display: grid;
+  grid-template-columns: 0.28rem minmax(0, 1fr);
+  gap: 0.72rem;
+  padding: 0.58rem 0;
+}
+
+.watch-modal__update-marker {
+  width: 0.28rem;
+  min-height: 2.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, $color-text-muted 72%, transparent);
+}
+
+.watch-modal__update-content {
+  min-width: 0;
+
+  p {
+    margin: 0;
+    color: color-mix(in srgb, $color-text 92%, white);
+    font-size: 0.95rem;
+    font-weight: 560;
+    line-height: 1.32;
+  }
+
+  time {
+    display: block;
+    margin-top: 0.1rem;
+    color: $color-text-muted;
+    font-size: 0.86rem;
+    line-height: 1.25;
+  }
+}
+
+
+.watch-modal__source-pills {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.1rem;
+}
+
+.watch-modal__source-pill {
+  flex: 0 0 auto;
+  padding: 0.48rem 0.72rem;
+  border: 1px solid color-mix(in srgb, $color-border 75%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, $color-bg 74%, transparent);
+  color: $color-text-muted;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background $transition, color $transition, border-color $transition;
+
+  &--active {
+    color: #fff;
+    background: $color-accent;
+    border-color: $color-accent;
+  }
+}
+
+.watch-modal__episodes-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  background: color-mix(in srgb, $color-surface-hover 78%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.watch-modal__episodes-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.72rem;
+  height: 2.35rem;
+  border: 1px solid color-mix(in srgb, $color-border 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, $color-bg 78%, transparent);
+  color: $color-text-muted;
+}
+
+.watch-modal__episodes-search-input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: $color-text;
+  font: inherit;
+  font-size: 0.86rem;
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+}
+
+.watch-modal__toolbar-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.watch-modal__icon-action {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, $color-border 70%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, $color-bg 78%, transparent);
+  color: $color-text;
+  cursor: pointer;
+  transition: background $transition, color $transition, border-color $transition, opacity $transition;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, $color-accent 14%, $color-bg);
+    border-color: color-mix(in srgb, $color-accent 32%, $color-border);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.watch-modal__options {
+  position: relative;
+}
+
+.watch-modal__options-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: 13.5rem;
+  z-index: 5;
+  display: grid;
+  padding: 0.35rem;
+  border: 1px solid $color-border;
+  border-radius: 14px;
+  background: color-mix(in srgb, $color-surface 96%, black);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+
+  button {
+    padding: 0.58rem 0.65rem;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: $color-text;
+    text-align: left;
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: $color-surface-hover;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.watch-modal__download-status {
+  padding: 0.52rem 0.7rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, $color-accent 9%, transparent);
+  color: color-mix(in srgb, $color-text 90%, white);
+  font-size: 0.8rem;
+}
+
+.watch-modal__episodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.8rem, 1fr));
+  gap: 0.5rem;
+}
+
+.watch-modal__episode-card {
+  position: relative;
+  min-height: 5.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border: 1px solid color-mix(in srgb, $color-border 60%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, $color-bg 74%, transparent);
+  color: $color-text;
+  text-align: left;
+  cursor: pointer;
+  transition: background $transition, border-color $transition, transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, $color-surface-hover 82%, white 3%);
+    border-color: color-mix(in srgb, $color-accent 25%, $color-border);
+  }
+
+  &--active {
+    border-color: $color-accent;
+    background: color-mix(in srgb, $color-accent 12%, $color-bg);
+  }
+
+  &--watched {
+    .watch-modal__episode-num {
+      color: $color-success;
+    }
+
+    .watch-modal__episode-mini:first-child {
+      color: $color-success;
+      border-color: color-mix(in srgb, $color-success 35%, $color-border);
+    }
+  }
+
+  &--highlight {
+    border-color: $color-accent;
+    box-shadow: 0 0 0 2px color-mix(in srgb, $color-accent 26%, transparent);
+  }
+}
+
+.watch-modal__episode-main {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.watch-modal__episode-num {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.watch-modal__episode-name {
+  width: 100%;
+  min-height: 1rem;
+  color: $color-text-muted;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.watch-modal__episode-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.watch-modal__episode-mini {
+  width: 1.65rem;
+  height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, $color-border 72%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, $color-surface-hover 70%, transparent);
+  padding: 0;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: color $transition, background $transition, border-color $transition;
+
+  &:hover {
+    color: $color-text;
+    background: color-mix(in srgb, $color-accent 12%, $color-surface-hover);
+  }
+
+  &--downloaded {
+    color: $color-accent;
+    border-color: color-mix(in srgb, $color-accent 45%, $color-border);
+    background: color-mix(in srgb, $color-accent 14%, transparent);
+
+    &:hover {
+      color: $color-accent;
+      background: color-mix(in srgb, $color-accent 22%, transparent);
+    }
+  }
+}
+
+.watch-modal__confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: color-mix(in srgb, $color-surface 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.watch-modal__confirm-inner {
+  width: min(22rem, 100%);
+  padding: 1.1rem;
+  border: 1px solid $color-border;
+  border-radius: 18px;
+  background: $color-surface;
+  text-align: center;
+}
+
+.watch-modal__confirm-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.watch-modal__confirm-text {
+  margin-top: 0.45rem;
+  color: $color-text-muted;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.watch-modal__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.9rem;
+}
+
+.watch-modal__confirm-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+
+  &--secondary {
+    border: 1px solid $color-border;
+    background: $color-surface-hover;
+    color: $color-text-muted;
+  }
+
+  &--primary {
+    border: 1px solid $color-accent;
+    background: $color-accent;
+    color: #fff;
+  }
+}
+
+@media (max-width: 720px) {
+  .watch-modal {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .watch-modal__panel {
+    width: 100%;
+    height: 92vh;
+    max-height: 92vh;
+    border-radius: 24px 24px 0 0;
+    animation: watch-sheet-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .watch-modal__head {
+    padding-top: 1.2rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0.45rem;
+      left: 50%;
+      width: 2.4rem;
+      height: 0.25rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, $color-text-muted 45%, transparent);
+      transform: translateX(-50%);
+    }
+  }
+
+  .watch-modal__variants,
+  .watch-modal__episodes-view {
+    padding: 0.8rem;
+  }
+
+  .watch-modal__filters {
+    gap: 0.35rem;
+  }
+
+  .watch-modal__episodes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .watch-modal__episodes-toolbar {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 420px) {
+  .watch-modal__episodes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

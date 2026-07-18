@@ -1,0 +1,358 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+ipcRenderer.on('player:fullscreen', (_, isFullscreen) => {
+  window.dispatchEvent(new CustomEvent('player-fullscreen', { detail: isFullscreen }));
+});
+
+ipcRenderer.on('player:applySync', (_, playback) => {
+  window.dispatchEvent(new CustomEvent('player:applySync', { detail: playback }));
+});
+
+// Dynamic content change: main window → player window (no reload)
+ipcRenderer.on('player:changeContent', (_, params) => {
+  window.dispatchEvent(new CustomEvent('player:changeContent', { detail: params }));
+});
+
+ipcRenderer.on('lobby:playerStateChanged', (_, playback) => {
+  window.dispatchEvent(new CustomEvent('lobby:playerStateChanged', { detail: playback }));
+});
+
+// Proposal events: main window → player window
+ipcRenderer.on('lobby:proposal', (_, data) => {
+  window.dispatchEvent(new CustomEvent('lobby:proposal', { detail: data }));
+});
+
+// Vote result from player → main window
+ipcRenderer.on('lobby:voteFromPlayer', (_, data) => {
+  window.dispatchEvent(new CustomEvent('lobby:voteFromPlayer', { detail: data }));
+});
+
+// Участники и события активности от главного окна → плеер
+ipcRenderer.on('lobby:activityFeed', (_, data) => {
+  window.dispatchEvent(new CustomEvent('lobby:activityFeed', { detail: data }));
+});
+
+ipcRenderer.on('lobby:participantsList', (_, participants) => {
+  window.dispatchEvent(new CustomEvent('lobby:participantsList', { detail: participants }));
+});
+
+ipcRenderer.on('app:update-progress', (_, payload) => {
+  window.dispatchEvent(new CustomEvent('app-update-progress', { detail: payload }));
+});
+
+ipcRenderer.on('anix:offline', (_, payload) => {
+  window.dispatchEvent(new CustomEvent('anix:offline', { detail: payload }));
+});
+
+// Discord RPC: join lobby via Discord party invite
+ipcRenderer.on('discord:joinLobby', (_, payload) => {
+  window.dispatchEvent(new CustomEvent('discord:joinLobby', { detail: payload }));
+});
+
+// Upscale settings sync from main window → player window
+ipcRenderer.on('upscale:settingsChanged', (_, settings) => {
+  window.dispatchEvent(new CustomEvent('anix:upscaleChanged', { detail: settings }));
+});
+
+// Player debug HUD toggle (настройки → отдельное окно плеера)
+ipcRenderer.on('player:debugOverlay', (_, enabled) => {
+  window.dispatchEvent(
+    new CustomEvent('anix:playerDebugChanged', { detail: { playerDebugOverlay: !!enabled } }),
+  );
+});
+
+// Notify main window when player window is closed
+ipcRenderer.on('player:closed', () => {
+  window.dispatchEvent(new CustomEvent('player:windowClosed'));
+});
+
+contextBridge.exposeInMainWorld('electron', {
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+  getVersions: () => ipcRenderer.invoke('app:getVersions'),
+  getDeviceId: () => ipcRenderer.invoke('app:getDeviceId'),
+  adminGetSession: () => ipcRenderer.invoke('admin:getSession'),
+  adminSaveSession: (payload) => ipcRenderer.invoke('admin:saveSession', payload),
+  adminClearSession: () => ipcRenderer.invoke('admin:clearSession'),
+  getAnixbackEndpoint: () => ipcRenderer.invoke('anix:getAnixbackEndpoint'),
+  setAnixbackEndpoint: (mode) => ipcRenderer.invoke('anix:setAnixbackEndpoint', mode),
+  fetchReleaseGeoBypass: (releaseId) => ipcRenderer.invoke('anix:releaseInfoGeoBypass', releaseId),
+  window: {
+    minimize: () => ipcRenderer.send('window:minimize'),
+    maximize: () => ipcRenderer.send('window:maximize'),
+    close: () => ipcRenderer.send('window:close'),
+  },
+  setMainFullScreen: (flag) => ipcRenderer.send('window:setFullScreen', !!flag),
+  openPlayerWindow: (params) => ipcRenderer.invoke('player:openWindow', params),
+  closePlayerWindow: () => ipcRenderer.send('player:close'),
+  togglePlayerFullScreen: () => ipcRenderer.invoke('player:toggleFullScreen'),
+  togglePlayerAlwaysOnTop: () => ipcRenderer.invoke('player:toggleAlwaysOnTop'),
+  isPlayerOpen: () => ipcRenderer.invoke('player:isOpen'),
+  openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
+  downloadEpisodes: (payload) => ipcRenderer.invoke('episode-download:download', payload),
+  queueEpisodeDownloads: (payload) => ipcRenderer.invoke('episode-download:queue', payload),
+  getDownloadSettings: () => ipcRenderer.invoke('downloads:getSettings'),
+  pickDownloadDirectory: () => ipcRenderer.invoke('downloads:pickDirectory'),
+  openDownloadDirectory: (dir) => ipcRenderer.invoke('downloads:openDirectory', dir),
+  showDownloadFile: (filePath) => ipcRenderer.invoke('downloads:showFile', filePath),
+  openDownloadFile: (filePath) => ipcRenderer.invoke('downloads:openFile', filePath),
+  listDownloadLibrary: () => ipcRenderer.invoke('downloads:listLibrary'),
+  checkDownloadFiles: (payload) => ipcRenderer.invoke('downloads:checkFiles', payload),
+  syncPlayerState: (playback) => ipcRenderer.send('player:syncState', playback),
+  sendPlayerState: (playback) => ipcRenderer.send('player:stateChanged', playback),
+  startUpdateDownload: () => ipcRenderer.invoke('app:startUpdateDownload'),
+  checkForUpdate: (currentVersion) => ipcRenderer.invoke('app:checkForUpdate', currentVersion),
+  installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
+  getLinuxInstallType: () => ipcRenderer.invoke('app:getLinuxInstallType'),
+  getSettings: () => ipcRenderer.invoke('app:getSettings'),
+  saveSettings: (settings) => ipcRenderer.invoke('app:saveSettings', settings),
+  getDevBridgeStatus: () => ipcRenderer.invoke('dev:getBridgeStatus'),
+  setDevBridgeEnabled: (enabled) => ipcRenderer.invoke('dev:setBridgeEnabled', enabled),
+  regenerateDevBridgeToken: () => ipcRenderer.invoke('dev:regenerateBridgeToken'),
+  // Lobby proposal IPC
+  sendProposalToPlayer: (data) => ipcRenderer.send('lobby:proposalToPlayer', data),
+  sendLobbyVote: (proposalId, accept) => ipcRenderer.send('lobby:voteFromPlayer', proposalId, accept),
+  // Участники и события активности → плеер
+  sendActivityToPlayer: (data) => ipcRenderer.send('lobby:activityToPlayer', data),
+  sendParticipantsToPlayer: (participants) => ipcRenderer.send('lobby:participantsToPlayer', participants),
+  lobbyNotifyBufferingStart: () => ipcRenderer.send('lobby:bufferingStartFromPlayer'),
+  lobbyPlayerSynced: () => ipcRenderer.send('lobby:playerSyncedFromPlayer'),
+  sendLobbyWaitingOverlayToPlayer: (payload) => ipcRenderer.send('lobby:waitingOverlayToPlayer', payload),
+  // Лобби: запросы идут через main — fetch из Chromium к этому серверу зависает
+  lobbyRequest: (payload) => ipcRenderer.invoke('lobby:request', payload),
+  // Discord Rich Presence update from renderer
+  discordUpdate: (data) => ipcRenderer.send('discord:update', data),
+  // Single-window: сообщаем Discord, что активно — плеер (/watch) или меню
+  setDiscordActivityContext: (ctx) => ipcRenderer.send('discord:focusContext', ctx),
+  // Theme editor
+  openThemeEditor: (opts) => ipcRenderer.invoke('theme-editor:open', opts ?? {}),
+  themeEditorSaved: (themeId) => ipcRenderer.send('theme-editor:saved', themeId),
+  themeEditorLiveUpdate: (vars) => ipcRenderer.send('theme-editor:liveUpdate', vars),
+  themeEditorDeleted: (themeId) => ipcRenderer.send('theme-editor:deleted', themeId),
+  // Upscale settings sync to player window
+  sendUpscaleSettings: (settings) => ipcRenderer.send('upscale:applySettings', settings),
+  // Upscale Preview Tool
+  openUpscaleTool: () => ipcRenderer.invoke('tool:openUpscale'),
+  saveToolScreenshot: (dataUrl, filename) => ipcRenderer.invoke('tool:saveScreenshot', dataUrl, filename),
+  // Window controls (frameless)
+  minimizeToolWindow:      () => ipcRenderer.invoke('tool:minimize'),
+  toggleMaximizeToolWindow:() => ipcRenderer.invoke('tool:toggleMaximize'),
+  closeToolWindow:         () => ipcRenderer.invoke('tool:close'),
+  onToolWindowState: (cb) => ipcRenderer.on('tool:windowState', (_, state) => cb(state)),
+  openOverviewVideoEditor: (payload) => ipcRenderer.invoke('overview-editor:open', payload),
+  getOverviewEditorPayload: () => ipcRenderer.invoke('overview-editor:getPayload'),
+  overviewEditorDone: () => ipcRenderer.send('overview-editor:done'),
+  // Logging
+  logRenderer:      (entry) => ipcRenderer.invoke('log:renderer', entry),
+  logGetSessions:   ()      => ipcRenderer.invoke('log:getSessions'),
+  logGetSessionLog: (sessionId, file, limit) => ipcRenderer.invoke('log:getSessionLog', sessionId, file, limit),
+  logGetSystemInfo: ()      => ipcRenderer.invoke('log:getSystemInfo'),
+  logCollectZip:    ()      => ipcRenderer.invoke('log:collectZip'),
+  logOpenZip:       (p)     => ipcRenderer.invoke('log:openZip', p),
+  logOpenFolder:    ()      => ipcRenderer.invoke('log:openFolder'),
+});
+
+// Download progress events: main → renderer
+ipcRenderer.on('episode-download:progress', (_, data) => {
+  window.dispatchEvent(new CustomEvent('episode-download:progress', { detail: data }));
+});
+
+ipcRenderer.on('lobby:bufferingStartFromPlayer', () => {
+  window.dispatchEvent(new CustomEvent('lobby:bufferingStartFromPlayer'));
+});
+ipcRenderer.on('lobby:playerSyncedFromPlayer', () => {
+  window.dispatchEvent(new CustomEvent('lobby:playerSyncedFromPlayer'));
+});
+ipcRenderer.on('lobby:playerWaitingOverlay', (_, payload) => {
+  window.dispatchEvent(new CustomEvent('lobby:playerWaitingOverlay', { detail: payload }));
+});
+
+// Main window receives notification when theme editor saves a theme
+ipcRenderer.on('theme-editor:saved', (_, themeId) => {
+  window.dispatchEvent(new CustomEvent('anix:themeEditorSaved', { detail: { themeId } }));
+});
+
+// Main window receives live theme vars from theme editor (for real-time preview)
+ipcRenderer.on('theme-editor:liveUpdate', (_, vars) => {
+  window.dispatchEvent(new CustomEvent('anix:themeEditorLiveUpdate', { detail: vars }));
+});
+
+// Main window receives notification when theme editor deletes a theme
+ipcRenderer.on('theme-editor:deleted', (_, themeId) => {
+  window.dispatchEvent(new CustomEvent('anix:themeEditorDeleted', { detail: { themeId } }));
+});
+
+ipcRenderer.on('overview-editor:done', () => {
+  window.dispatchEvent(new CustomEvent('anix:overviewEditorDone'));
+});
+
+// ── Structured API (anixApi) — grouped endpoints like AniDesk ──
+contextBridge.exposeInMainWorld('anixApi', {
+  client: {
+    get baseUrl() { return '(use anixApi.client.getBaseUrl())'; },
+    get token() { return '(use anixApi.client.getAuthStatus())'; },
+    getBaseUrl: () => ipcRenderer.invoke('anix:getBaseUrl'),
+    setBaseUrl: (baseUrl) => ipcRenderer.invoke('anix:setBaseUrl', baseUrl),
+    pingBaseUrl: (baseUrl) => ipcRenderer.invoke('anix:pingBaseUrl', baseUrl),
+    getAuthStatus: () => ipcRenderer.invoke('anix:getAuthStatus'),
+    checkConnection: () => ipcRenderer.invoke('anix:checkConnection'),
+    testOffline: () => ipcRenderer.invoke('anix:testOffline'),
+  },
+
+  auth: {
+    signIn: (username, password) => ipcRenderer.invoke('anix:login', username, password),
+    logout: () => ipcRenderer.invoke('anix:logout'),
+    getStatus: () => ipcRenderer.invoke('anix:getAuthStatus'),
+  },
+
+  profile: {
+    self: () => ipcRenderer.invoke('anix:selfProfile'),
+    info: (id) => ipcRenderer.invoke('anix:profileById', id),
+    getFriends: (profileId, page = 0) => ipcRenderer.invoke('anix:friends', profileId, page),
+    sendFriendRequest: (profileId) => ipcRenderer.invoke('anix:friendRequestSend', profileId),
+    removeFriendRequest: (profileId) => ipcRenderer.invoke('anix:friendRequestRemove', profileId),
+    getFriendRecommendations: () => ipcRenderer.invoke('anix:friendRecommendations'),
+    getBookmarks: (profileId, type, page = 0, sort = 1, filterAnnounce = 0, filter = 0) =>
+      ipcRenderer.invoke('anix:getBookmarks', profileId, type, page, sort, filterAnnounce, filter),
+    getVotedReleases: (profileId, page = 0) => ipcRenderer.invoke('anix:votedReleases', profileId, page),
+    getReleaseComments: (profileId, page = 0, sort = 1) =>
+      ipcRenderer.invoke('anix:profileReleaseComments', profileId, page, sort),
+    getCollectionComments: (profileId, page = 0, sort = 1) =>
+      ipcRenderer.invoke('anix:profileCollectionComments', profileId, page, sort),
+    getArticleComments: (profileId, page = 0, sort = 1) =>
+      ipcRenderer.invoke('anix:profileArticleComments', profileId, page, sort),
+    getFavoriteVideos: (profileId, page = 0) =>
+      ipcRenderer.invoke('anix:profileFavoriteVideos', profileId, page),
+  },
+
+  release: {
+    info: (id, extended = true) => ipcRenderer.invoke('anix:releaseById', id, extended),
+    filter: (page = 0, filterArgs = {}, extended = true) =>
+      ipcRenderer.invoke('anix:filterReleases', page, JSON.parse(JSON.stringify(filterArgs)), extended),
+    random: (extended = true) => ipcRenderer.invoke('anix:randomRelease', extended),
+    randomFavorite: (extended = true) => ipcRenderer.invoke('anix:randomFavorite', extended),
+    randomProfileList: (profileId, status, extended = true) =>
+      ipcRenderer.invoke('anix:randomProfileList', profileId, status, extended),
+    related: (relatedId, page = 0) => ipcRenderer.invoke('anix:relatedReleases', relatedId, page),
+    getDubbers: (releaseId) => ipcRenderer.invoke('anix:getDubbers', releaseId),
+    getDubberSources: (releaseId, dubberId) => ipcRenderer.invoke('anix:getDubberSources', releaseId, dubberId),
+    getEpisodes: (releaseId, dubberId, sourceId, sort = 1) => ipcRenderer.invoke('anix:getEpisodes', releaseId, dubberId, sourceId, sort),
+    getEpisode: (releaseId, sourceId, episodePosition) => ipcRenderer.invoke('anix:getEpisode', releaseId, sourceId, episodePosition),
+    getEpisodeUpdates: (releaseId, page = 0) => ipcRenderer.invoke('anix:getEpisodeUpdates', releaseId, page),
+    getDirectVideoLink: (embedUrl) => ipcRenderer.invoke('anix:getDirectVideoLink', embedUrl),
+    getVideos: (releaseId) => ipcRenderer.invoke('anix:getVideos', releaseId),
+    getVideoInCategory: (releaseId, categoryId, page = 1) => ipcRenderer.invoke('anix:getVideoInCategory', releaseId, categoryId, page),
+    addFavorite: (releaseId) => ipcRenderer.invoke('anix:addToFavorites', releaseId),
+    removeFavorite: (releaseId) => ipcRenderer.invoke('anix:removeFromFavorites', releaseId),
+    setListStatus: (releaseId, statusId) => ipcRenderer.invoke('anix:setListStatus', releaseId, statusId),
+    clearListStatus: (releaseId, statusId) => ipcRenderer.invoke('anix:clearListStatus', releaseId, statusId),
+    vote: (releaseId, vote) => ipcRenderer.invoke('anix:releaseVote', releaseId, vote),
+    deleteVote: (releaseId) => ipcRenderer.invoke('anix:releaseDeleteVote', releaseId),
+    schedule: () => ipcRenderer.invoke('anix:schedule'),
+  },
+
+  comments: {
+    release: {
+      list: (releaseId, page = 0, sort = 1) =>
+        ipcRenderer.invoke('anix:releaseComments', releaseId, page, sort),
+      get: (commentId) => ipcRenderer.invoke('anix:releaseCommentById', commentId),
+      replies: (commentId, page = 0, sort = 2) =>
+        ipcRenderer.invoke('anix:releaseCommentReplies', commentId, page, sort),
+      vote: (commentId, vote) => ipcRenderer.invoke('anix:releaseCommentVote', commentId, vote),
+      add: (releaseId, body) => ipcRenderer.invoke('anix:releaseCommentAdd', releaseId, body),
+      edit: (commentId, body) => ipcRenderer.invoke('anix:releaseCommentEdit', commentId, body),
+      delete: (commentId) => ipcRenderer.invoke('anix:releaseCommentDelete', commentId),
+    },
+  },
+
+  type: {
+    all: () => ipcRenderer.invoke('anix:typeAll'),
+  },
+
+  feed: {
+    latest: (page = 1) => ipcRenderer.invoke('anix:latestFeed', page),
+  },
+
+  discover: {
+    recommendations: (page = -1, previousPage = -1) =>
+      ipcRenderer.invoke('anix:discoverRecommendations', page, previousPage),
+    interesting: () => ipcRenderer.invoke('anix:discoverInteresting'),
+    watching: (page = 0) => ipcRenderer.invoke('anix:discoverWatching', page),
+    discussing: () => ipcRenderer.invoke('anix:discoverDiscussing'),
+    commentsWeek: () => ipcRenderer.invoke('anix:discoverCommentsWeek'),
+    collectionsWeek: (page = -1, previousPage = 0) =>
+      ipcRenderer.invoke('anix:discoverCollectionsWeek', page, previousPage),
+  },
+
+  search: {
+    releases: (query, page = 0, searchBy = 0) =>
+      ipcRenderer.invoke('anix:searchReleases', query, page, searchBy),
+    profiles: (query, page = 0) => ipcRenderer.invoke('anix:searchProfiles', query, page),
+    collections: (query, page = 0) => ipcRenderer.invoke('anix:searchCollections', query, page),
+  },
+
+  collection: {
+    info: (id) => ipcRenderer.invoke('anix:collectionById', id),
+    all: (page = 0, options = {}) => ipcRenderer.invoke('anix:collectionsAll', page, options),
+    profileCollections: (profileId, page = 0) =>
+      ipcRenderer.invoke('anix:collectionProfileCollections', profileId, page),
+    favorites: (page = 0) => ipcRenderer.invoke('anix:collectionFavorites', page),
+    getReleases: (id, page = 0) => ipcRenderer.invoke('anix:collectionReleases', id, page),
+    getRandomRelease: (id) => ipcRenderer.invoke('anix:collectionRandomRelease', id),
+    addFavorite: (id) => ipcRenderer.invoke('anix:addCollectionFavorite', id),
+    removeFavorite: (id) => ipcRenderer.invoke('anix:removeCollectionFavorite', id),
+  },
+
+  collectionMy: {
+    create: (body) => ipcRenderer.invoke('anix:collectionMyCreate', body),
+    edit: (id, body) => ipcRenderer.invoke('anix:collectionMyEdit', id, body),
+    editImage: (id, imageBase64, fileName) =>
+      ipcRenderer.invoke('anix:collectionMyEditImage', id, imageBase64, fileName),
+    releaseAdd: (id, releaseId) => ipcRenderer.invoke('anix:collectionMyReleaseAdd', id, releaseId),
+    delete: (id) => ipcRenderer.invoke('anix:collectionMyDelete', id),
+  },
+
+  channel: {
+    info: (id) => ipcRenderer.invoke('anix:channelById', id),
+    getBlog: (id) => ipcRenderer.invoke('anix:channelBlog', id),
+  },
+
+  notification: {
+    all: (page = 0) => ipcRenderer.invoke('anix:notificationsAll', page),
+    count: () => ipcRenderer.invoke('anix:notificationsCount'),
+  },
+
+  history: {
+    all: (page = 0) => ipcRenderer.invoke('anix:history', page),
+    delete: (releaseId) => ipcRenderer.invoke('anix:deleteFromHistory', releaseId),
+    add: (releaseId, sourceId, episodePosition) => ipcRenderer.invoke('anix:addToHistory', releaseId, sourceId, episodePosition),
+    markWatched: (releaseId, sourceId, episodePosition) => ipcRenderer.invoke('anix:markEpisodeAsWatched', releaseId, sourceId, episodePosition),
+    unmarkWatched: (releaseId, sourceId, episodePosition) => ipcRenderer.invoke('anix:unmarkEpisodeAsWatched', releaseId, sourceId, episodePosition),
+  },
+
+  favorites: {
+    all: (page = 0, sort = 1, filterAnnounce = 0, filter = 0) =>
+      ipcRenderer.invoke('anix:favorites', page, sort, filterAnnounce, filter),
+  },
+
+  article: {
+    info: (id) => ipcRenderer.invoke('anix:articleById', id),
+  },
+
+  home: {
+    getCustomTab: () => ipcRenderer.invoke('anix:homeCustomTabGet'),
+    setCustomTab: (data) => ipcRenderer.invoke('anix:homeCustomTabSet', JSON.parse(JSON.stringify(data))),
+  },
+
+  settings: {
+    getProfileSettings: () => ipcRenderer.invoke('anix:getProfileSettings'),
+    setStatus: (status) => ipcRenderer.invoke('anix:setStatus', status),
+    getSocial: () => ipcRenderer.invoke('anix:getSocial'),
+    setSocial: (data) => ipcRenderer.invoke('anix:setSocial', data),
+    setPrivacyStats: (state) => ipcRenderer.invoke('anix:setPrivacyStats', state),
+    setPrivacyCounts: (state) => ipcRenderer.invoke('anix:setPrivacyCounts', state),
+    setPrivacySocial: (state) => ipcRenderer.invoke('anix:setPrivacySocial', state),
+    setPrivacyFriendRequests: (state) => ipcRenderer.invoke('anix:setPrivacyFriendRequests', state),
+    getLoginInfo: () => ipcRenderer.invoke('anix:getLoginInfo'),
+    changeLogin: (newLogin) => ipcRenderer.invoke('anix:changeLogin', newLogin),
+  },
+});
