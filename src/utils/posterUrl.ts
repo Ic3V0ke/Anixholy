@@ -54,20 +54,23 @@ export function unwrapCdnUrl(raw: string): string {
 /**
  * URL для загрузки CDN-ассета из renderer.
  *
- * В Electron картинки грузятся НАПРЯМУЮ с CDN: нужные Referer/Origin/UA
- * ставит webRequest.onBeforeSendHeaders (setup/session-headers.js).
- * Прокси через main-процесс (anix-cdn://) для <img> больше не используется —
- * буферизация каждой картинки в main без таймаутов перегружала процесс,
- * который обслуживает ввод окна, и приложение зависало намертво.
+ * В Electron идём через anix-cdn:// (main-процесс, Node-fetch). Прямая загрузка
+ * из Chromium ненадёжна: часть запросов к CDN подвисает без ответа и без ошибки,
+ * а зависший <img> не выдаёт onerror — обложка просто не появляется.
+ *
+ * Исходные «мёртвые» зависания приложения давал не сам прокси, а отсутствие в нём
+ * ограничений: неограниченное число параллельных загрузок без таймаутов забивало
+ * main-процесс, который обслуживает ввод окна. Сейчас в cdn-proxy.js есть таймаут,
+ * лимит одновременных запросов, кэш и негативный кэш — поэтому путь безопасен.
  */
 export function toCdnProxyUrl(url: string): string {
   const trimmed = unwrapCdnUrl(url?.trim() ?? '');
   if (!trimmed) return '';
-  if (trimmed.startsWith('anix-cdn://')) return fromCdnProxyUrl(trimmed);
+  if (trimmed.startsWith('anix-cdn://')) return trimmed;
   if (trimmed.startsWith('/__cdn/')) return trimmed;
   if (!isAnixartCdnUrl(trimmed)) return trimmed;
   if (typeof window !== 'undefined' && window.electron) {
-    return trimmed;
+    return `anix-cdn://asset/?u=${encodeURIComponent(trimmed)}`;
   }
   if (import.meta.env.DEV && typeof window !== 'undefined') {
     return `/__cdn/?u=${encodeURIComponent(trimmed)}`;
